@@ -1,0 +1,23 @@
+# 실습 4. 고장 3 — 이 파드는 컨테이너가 만들어지지 않습니다. 원인을 찾아 고쳐 보세요
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-missing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-missing
+  template:
+    metadata:
+      labels:
+        app: demo-missing
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: demo-config-v2

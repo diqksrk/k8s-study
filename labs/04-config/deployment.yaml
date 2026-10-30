@@ -1,0 +1,25 @@
+# 실습 4. 실습 2 의 디플로이먼트에 컨피그맵 · 시크릿을 환경변수로 넣는다 (이미지는 그대로)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          ports:
+            - containerPort: 8080
+          envFrom:                 # 안의 키를 전부 환경변수로 넣는다
+            - configMapRef:
+                name: TODO         # TODO: configmap.yaml 의 metadata.name
+            - secretRef:
+                name: TODO         # TODO: secret.yaml 의 metadata.name

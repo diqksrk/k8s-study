@@ -1,0 +1,20 @@
+# 실습 2. "파드 3개" 를 선언하는 디플로이먼트
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: TODO   # TODO: 위 selector.matchLabels 의 app 값과 같게 바꾸세요
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          ports:
+            - containerPort: 8080

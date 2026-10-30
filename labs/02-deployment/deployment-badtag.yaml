@@ -1,0 +1,20 @@
+# 실습 2-5. 없는 버전으로 바꿔 보기 (deployment.yaml 과 이미지 태그만 다름)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:9.9
+          ports:
+            - containerPort: 8080

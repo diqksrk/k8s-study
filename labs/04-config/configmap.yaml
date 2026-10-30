@@ -1,0 +1,8 @@
+# 실습 4. 앱 설정 — 이미지 밖에 둔다
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-config
+data:
+  SPRING_PROFILES_ACTIVE: dev           # 지금은 빌드할 때 -Pprofile=dev 로 굽는 값
+  APP_GREETING: hello from configmap    # 앱의 app.greeting 설정이 된다

@@ -1,0 +1,31 @@
+# 실습 4. 고장 4 — 이 파드는 떴다가 계속 죽습니다. 원인을 찾아 고쳐 보세요
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-crash-config
+data:
+  APP_GREETING: hello from crash test
+  SERVER_PORT: "abc"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-crash
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-crash
+  template:
+    metadata:
+      labels:
+        app: demo-crash
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: demo-crash-config

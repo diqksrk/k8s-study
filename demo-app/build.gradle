@@ -1,0 +1,50 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.2'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.google.cloud.tools.jib' version '3.4.4'
+}
+
+group = 'study.k8s'
+// 이미지 태그가 된다. 2회차 롤링 업데이트용 2.0 은 -PappVersion=2.0 으로 빌드
+version = findProperty('appVersion') ?: '1.0'
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// 화면에 찍을 버전(META-INF/build-info.properties)
+springBoot {
+	buildInfo()
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+// Docker 없이 ECR 로 바로 올린다. 명령은 README 참고 (PowerShell 에서는 -P · -D 인자를 큰따옴표로 감쌀 것)
+jib {
+	from {
+		image = findProperty('baseImage') ?: 'eclipse-temurin:21-jre'
+	}
+	to {
+		image = "${findProperty('registry') ?: 'registry.example.com'}/k8s-study/demo-app:${version}"
+	}
+	container {
+		ports = ['8080']
+		// 15명이 3~5개씩 띄워도 노드가 버티도록 힙을 작게 묶는다
+		jvmFlags = ['-Xmx128m', '-XX:+UseSerialGC']
+	}
+}

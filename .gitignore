@@ -1,0 +1,4 @@
+demo-app/build/
+demo-app/.gradle/
+*.iml
+.idea/

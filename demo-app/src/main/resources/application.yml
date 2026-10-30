@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: demo-app
+
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 20
+
+# 컨피그맵 · 시크릿에서 APP_GREETING, APP_STAGE, APP_PASSWORD 환경변수로 덮어쓴다 (Spring relaxed binding)
+app:
+  greeting: hello from application.yml
+  stage: no-profile
+  password: ""
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,env,info
+  endpoint:
+    env:
+      # 실습용: 시크릿이 평문으로 보이는 것을 보여 주려고 연다. 실제 서비스에서는 절대 이렇게 열지 말 것
+      show-values: always

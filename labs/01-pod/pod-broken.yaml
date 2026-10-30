@@ -1,0 +1,13 @@
+# 실습 1. 고장 1 — 이 파드는 뜨지 않습니다. 원인을 찾아 고쳐 보세요
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-broken
+  labels:
+    app: demo-broken
+spec:
+  containers:
+    - name: demo
+      image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:9.9
+      ports:
+        - containerPort: 8080

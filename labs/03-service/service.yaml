@@ -1,0 +1,11 @@
+# 실습 3. 파드 3개 앞에 고정 이름을 붙이는 서비스
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+spec:
+  selector:
+    app: TODO   # TODO: 실습 2 디플로이먼트가 만든 파드의 레이블 값으로 바꾸세요
+  ports:
+    - port: 80          # 서비스가 받는 포트
+      targetPort: 8080  # 파드(컨테이너)가 듣는 포트

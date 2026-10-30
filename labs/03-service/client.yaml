@@ -1,0 +1,11 @@
+# 실습 3. 클러스터 안에서 curl 을 쳐 볼 임시 파드
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+spec:
+  terminationGracePeriodSeconds: 1   # 지울 때 30초 기다리지 않게
+  containers:
+    - name: client
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "36000"]     # 아무 일도 안 하고 떠 있기만 한다. 우리가 exec 로 들어가서 쓴다

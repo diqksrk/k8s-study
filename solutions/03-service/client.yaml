@@ -1,0 +1,11 @@
+# 실습 3 완성본 — labs/03-service/client.yaml 과 같음
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+spec:
+  terminationGracePeriodSeconds: 1
+  containers:
+    - name: client
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "36000"]
