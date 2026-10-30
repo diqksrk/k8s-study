@@ -12,19 +12,43 @@
 
 ## 시작 전에
 
-[접속 가이드](docs/접속가이드.md) 대로 접속을 확인해 둡니다. 아래처럼 나오면 준비 끝입니다.
+**1. 실습 저장소 받기** — 홈 폴더에 받고 그 폴더로 들어갑니다. 실습 명령은 전부 **이 폴더(`k8s-study`) 맨 위**에서 칩니다. `labs` 안으로 더 들어가지 않습니다.
 
 ```powershell
-kubectl get pods
+cd ~
+git clone https://github.com/diqksrk/k8s-study.git
+cd k8s-study
+ls          # labs · docs · HANDS_ON.md 가 보이면 맞는 폴더 (Windows 는 표 모양으로 나옵니다)
 ```
 
-```text
-No resources found in k8s-study-<아이디> namespace.
+git 이 없으면 [저장소 페이지](https://github.com/diqksrk/k8s-study)의 **Code → Download ZIP** 으로 받아 홈 폴더에 풀고, 폴더 이름을 `k8s-study` 로 맞춥니다.
+
+**2. 접속 파일 쓰기** — 1:1 로 받은 `<아이디>.kubeconfig` 를 다운로드 폴더에 둔 채로, 내 PC 에 맞는 한 줄만 칩니다. `<아이디>` 는 내 아이디로 바꿉니다. 이 줄은 지금 연 터미널 창에만 적용되니, **창을 새로 열면 다시** 칩니다. 원래 쓰던 다른 쿠버네티스 설정은 건드리지 않습니다.
+
+```bash
+# Mac
+export KUBECONFIG=~/Downloads/<아이디>.kubeconfig
 ```
 
-- 셸은 **Windows Terminal + PowerShell** 입니다. 터미널은 **이 저장소 맨 위 폴더**에서 엽니다. 명령의 경로가 모두 여기 기준입니다.
+```powershell
+# Windows (PowerShell)
+$env:KUBECONFIG="$HOME\Downloads\<아이디>.kubeconfig"
+```
+
+([접속 가이드](docs/접속가이드.md) 대로 `~/.kube/config` 에 미리 넣어 두었다면 이 단계는 건너뜁니다.)
+
+**3. 확인**
+
+```powershell
+kubectl config view --minify      # namespace: k8s-study-<아이디>
+kubectl get pods                  # No resources found in k8s-study-<아이디> namespace.
+kubectl get nodes                 # 노드 3대가 Ready (노드는 보기만 할 수 있습니다)
+```
+
+- 터미널은 Windows 는 **Windows Terminal + PowerShell**, Mac 은 기본 **터미널**입니다. 새 탭은 Windows `Ctrl+Shift+T`, Mac `Cmd+T`.
 - YAML 의 `# TODO` 줄은 VS Code 같은 편집기로 고칩니다(메모장은 들여쓰기가 깨지기 쉽습니다).
-- 내 PC 에서 칠 때는 `curl` 이 아니라 **`curl.exe`** 입니다. PowerShell 의 `curl` 은 다른 명령의 별칭입니다. 새 탭은 `Ctrl+Shift+T`.
+- 내 PC 에서 curl 을 칠 때 Windows 는 **`curl.exe`**, Mac 은 `curl` 입니다. `curl.exe` 는 Windows 10 부터 기본으로 들어 있는 프로그램이고, PowerShell 에서 그냥 `curl` 은 다른 명령(Invoke-WebRequest)의 별칭입니다.
+- 명령 칸은 **한 줄씩** 칩니다. 여러 줄을 한 줄에 이어 붙이면 `unknown shorthand flag` 같은 에러가 납니다.
 
 **읽는 법** — 단계마다 **할 일 → 명령 → 나와야 할 화면 → 확인** 순서입니다. 나와야 할 화면은 예시라서 파드 이름 · IP · 시각은 사람마다 다릅니다. **(먼저 끝났으면)** 이 붙은 단계는 건너뛰어도 다음 단계에 지장이 없습니다. 자주 쓰는 명령은 [치트시트](docs/치트시트.md) 에 있습니다.
 
@@ -40,7 +64,7 @@ No resources found in k8s-study-<아이디> namespace.
 
 ```powershell
 kubectl apply -f labs/01-pod/pod.yaml
-kubectl get pods -o wide -w          # Running 이 되면 Ctrl+C
+kubectl get pods -o wide -w          # -o wide 는 IP · NODE 열까지, -w 는 계속 지켜보기 · Ctrl+C 로 끝
 ```
 
 나와야 할 화면 (예시)
@@ -54,9 +78,9 @@ demo-pod   0/1     ContainerCreating   0          2s    <none>          ip-192-1
 demo-pod   1/1     Running             0          9s    192.168.41.23   ip-192-168-41-12.ap-northeast-2…
 ```
 
-**확인** — STATUS 가 Running 이 되면 Ctrl+C. IP 와 NODE 열도 봐 둡니다.
+**확인** — STATUS 가 Running 이 되면 Ctrl+C. IP 열이 이 파드의 주소(podIP), NODE 열이 올라간 노드입니다.
 
-**막히면** — ContainerCreating 이 20~40초 가는 건 노드가 이미지를 처음 받는 중이라서입니다. 기다립니다.
+**막히면** — 'path … does not exist' 면 k8s-study 맨 위 폴더가 아닙니다 · ContainerCreating 몇 초는 이미지 받는 중.
 
 ### ② 누가 띄웠나 — Events
 
@@ -91,7 +115,8 @@ Events:
 ```powershell
 kubectl logs demo-pod
 kubectl port-forward pod/demo-pod 18080:8080      # 켜 둔 채로 둡니다
-curl.exe -s http://localhost:18080/                # 새 터미널 탭에서
+curl.exe -s http://localhost:18080/                # 새 터미널 탭에서 · Windows
+curl -s http://localhost:18080/                    # 새 터미널 탭에서 · Mac
 ```
 
 나와야 할 화면 (예시)
@@ -104,13 +129,12 @@ Forwarding from 127.0.0.1:18080 -> 8080
 PS> curl.exe -s http://localhost:18080/            (새 탭)
 pod      : demo-pod
 version  : 1.0
-profile  : (not set)
-…  stage · greeting · password · started 줄이 이어서 나옵니다
+profile  : (not set)              …  stage · greeting · password · started 줄이 이어서
 ```
 
 **확인** — profile : (not set) 이면 정상입니다(앱 기본값). 다 봤으면 port-forward 탭에서 Ctrl+C.
 
-**막히면** — curl 이 아니라 curl.exe · port-forward 탭이 아니라 새 탭에서 · 'Unable to listen on port 18080' 이면 28080:8080.
+**막히면** — curl.exe 는 Windows 10 부터 들어 있는 기본 프로그램(따로 안 받음) · 새 탭에서 · 18080 이 이미 쓰이면 28080:8080.
 
 ### ③ 안으로 들어가기
 

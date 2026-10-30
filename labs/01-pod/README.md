@@ -1,6 +1,6 @@
 # 실습 1. 파드
 
-파드 하나를 띄우고 안팎을 들여다본 다음, 일부러 고장 내 봅니다. 명령은 모두 **저장소 루트**에서 칩니다.
+파드 하나를 띄우고 안팎을 들여다본 다음, 일부러 고장 내 봅니다. 명령은 모두 **저장소 맨 위 폴더(`~/k8s-study`)**에서 칩니다. 이 폴더(`labs/01-pod`) 안으로 들어가서 치면 경로가 맞지 않습니다.
 
 ## 1. 띄우기
 
@@ -34,13 +34,14 @@ kubectl port-forward pod/demo-pod 18080:8080
 port-forward 는 켜 둔 채로, **새 터미널 탭**에서:
 
 ```powershell
-curl.exe -s http://localhost:18080/
+curl.exe -s http://localhost:18080/     # Windows
+curl -s http://localhost:18080/         # Mac
 ```
 
 브라우저로 <http://localhost:18080/> 을 열어도 됩니다. 다 봤으면 port-forward 탭에서 `Ctrl+C`.
 
 > 내 PC 의 8080 은 다른 앱이 쓰고 있을 수 있어서 18080 을 씁니다.
-> PowerShell 의 `curl` 은 다른 명령의 별칭이라 꼭 `curl.exe` 로 칩니다.
+> Windows 는 `curl.exe`, Mac 은 `curl` 입니다. `curl.exe` 는 Windows 10 부터 기본으로 들어 있는 프로그램이고, PowerShell 의 `curl` 은 다른 명령(Invoke-WebRequest)의 별칭입니다.
 
 ## 4. 안으로 들어가기
 
