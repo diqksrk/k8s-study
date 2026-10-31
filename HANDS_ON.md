@@ -4,7 +4,7 @@
 
 | 실습 | 폴더 | 하는 일 |
 |---|---|---|
-| 0. 준비 · 접속 | — | 받은 파일로 kubectl 넣기, 저장소 받기, 접속 파일, 내 칸에 접속 |
+| 0. 준비 · 접속 | — | 받은 압축 풀기, kubectl · 접속 파일 설정, 내 칸에 접속 |
 | 1. 파드 | `labs/01-pod` | 띄우고 들여다보기, Events 읽기, 고장 1 |
 | 2. 디플로이먼트 | `labs/02-deployment` | 지워도 다시 생기는 파드, 레이블, 없는 버전으로 바꾸기 |
 | 3. 서비스 | `labs/03-service` | 서비스 이름으로 부르기, 파드를 갈아엎어도 그대로, 고장 2 |
@@ -13,73 +13,72 @@
 
 ## 실습 0. 준비 · 접속
 
-내 PC 에서 클러스터의 내 칸(네임스페이스 `k8s-study-<아이디>`)에 붙는 데까지 합니다. 스터디를 시작할 때 1:1 메시지로 파일을 받습니다. AWS 계정은 필요 없습니다.
+내 PC 에서 클러스터의 내 칸(네임스페이스)에 붙는 데까지 합니다. AWS 계정도 git 도 필요 없습니다. 받는 것은 두 가지입니다.
 
-- Windows — `kubectl.exe`, 접속 파일 `<아이디>.kubeconfig`, 이 실습 가이드(PDF)
-- Mac — 접속 파일 `<아이디>.kubeconfig`, 이 실습 가이드(PDF). kubectl 은 brew 로 설치합니다
+- **`k8s-study.zip`** — 1:1 메시지로 받습니다. 실습 파일, 내 접속 파일(`kubeconfig`), Windows 용 kubectl 이 들어 있습니다. 접속 파일에는 내 칸에 들어가는 열쇠(토큰)가 들어 있으니 다른 사람에게 넘기지 않습니다.
+- **이 실습 가이드(PDF)**
 
-받은 파일은 **다운로드 폴더**에 저장합니다. 아래 명령은 전부 파일이 다운로드 폴더에 있다고 보고 씁니다. 접속 파일에는 내 칸에 들어가는 열쇠(토큰)가 들어 있으니 다른 사람에게 넘기지 않습니다.
+`k8s-study.zip` 은 **다운로드 폴더**에 저장합니다. 명령은 누구나 같습니다. 이름이나 아이디를 바꿔 칠 곳은 없습니다.
 
-### ① kubectl 넣기
+### ① 압축 풀고 kubectl 쓰기
 
-**Windows** — 받은 `kubectl.exe` 를 내 계정 폴더 `bin` 에 넣고 PATH 에 더합니다. 관리자 권한은 필요 없습니다. PowerShell 에서 한 줄씩:
+내 PC 에 맞는 칸 하나만 합니다. 한 번만 하면 새 창 · 새 탭에서도 그대로 쓰입니다.
+
+**Windows** — PowerShell 에서 한 줄씩:
 
 ```powershell
-New-Item -ItemType Directory -Force $HOME\bin | Out-Null; Copy-Item ~\Downloads\kubectl.exe $HOME\bin\
+Expand-Archive "$HOME\Downloads\k8s-study.zip" -DestinationPath $HOME   # 홈에 k8s-study 폴더가 생김
 $p = [Environment]::GetEnvironmentVariable("Path", "User")
-[Environment]::SetEnvironmentVariable("Path", "$p;$HOME\bin", "User")       # 다음에 여는 창부터
-$env:Path += ";$HOME\bin"                                                  # 지금 창에도
+[Environment]::SetEnvironmentVariable("Path", "$p;$HOME\k8s-study\bin", "User")             # 이 두 줄은
+[Environment]::SetEnvironmentVariable("KUBECONFIG", "$HOME\k8s-study\kubeconfig", "User")   # 다음 창부터
+$env:Path += ";$HOME\k8s-study\bin"; $env:KUBECONFIG = "$HOME\k8s-study\kubeconfig"         # 지금 창에도
 kubectl version --client
 ```
 
-**Mac** — 터미널에서 한 줄씩. 첫 줄은 이 가이드의 명령을 줄 끝 `# 설명` 까지 붙여 넣어도 에러가 나지 않게 하는 설정입니다(Mac 기본 터미널은 `#` 뒤를 설명으로 보지 않습니다). 그래서 첫 줄을 치기 전에는 `#` 이 붙은 줄을 붙여 넣지 않습니다.
+**Mac** — 터미널에서 한 줄씩. 첫 줄은 이 가이드의 명령을 줄 끝 `# 설명` 까지 붙여 넣어도 에러가 나지 않게 하는 설정입니다(Mac 기본 터미널은 `#` 뒤를 설명으로 보지 않습니다). 그래서 첫 줄부터 칩니다.
 
 ```bash
 setopt interactivecomments; echo 'setopt interactivecomments' >> ~/.zshrc
-brew install kubectl
+unzip -q ~/Downloads/k8s-study.zip -d ~                           # 홈에 k8s-study 폴더가 생김
+echo 'export KUBECONFIG=~/k8s-study/kubeconfig' >> ~/.zshrc; export KUBECONFIG=~/k8s-study/kubeconfig
+brew install kubectl                                              # 이미 있으면 그대로
 kubectl version --client
 ```
 
 나와야 할 화면 (예시)
 
 ```text
+PS> kubectl version --client
 Client Version: v1.34.13
-Kustomize Version: v5.7.1
 ```
 
-**확인** — `Client Version` 줄이 나오면 됩니다. 버전 숫자는 조금 달라도 괜찮습니다.
+**확인** — Client Version 이 나오면 됩니다(버전 숫자는 달라도 됨). 한 번만 하면 새 창 · 새 탭에서도 그대로 쓰입니다.
 
-**막히면** — Windows 에서 `'kubectl' 용어가 ... 인식되지 않습니다` 는 `$env:Path` 줄을 빠뜨렸거나 다른 창에서 친 경우입니다. 같은 창에서 다시 칩니다. `Copy-Item` 이 파일을 못 찾으면 `kubectl.exe` 가 다운로드 폴더가 아닌 곳에 저장된 것입니다. 실행할 때 보안 경고가 나오면 `Unblock-File $HOME\bin\kubectl.exe`. Mac 에 brew 가 없으면 옆 사람과 한 화면으로 하고, 끝나고 설치합니다.
+**막히면** — Windows: '이미 있습니다' 는 이미 푼 것 · 새 탭에서 kubectl 을 못 찾으면 Windows Terminal 을 닫았다 다시 엽니다. Mac: 첫 줄 끝에는 # 설명을 붙이지 않습니다 · unzip 이 파일을 못 찾으면 이미 풀린 것: mv ~/Downloads/k8s-study ~.
 
-### ② 저장소 받고 접속 파일 쓰기
+### ② 실습 폴더로 들어가기
 
-1:1 로 받은 접속 파일을 다운로드 폴더에 두고, 실습 저장소를 받아 그 폴더로 들어갑니다.
+압축을 푼 k8s-study 폴더로 들어가서, 무엇이 들어 있는지 봅니다 (Windows · Mac 같은 명령).
 
 ```powershell
-cd ~                                               # 홈 폴더에서
-git clone https://github.com/diqksrk/k8s-study.git
-cd k8s-study                                       # 오늘 명령은 전부 이 폴더에서 칩니다
-# 받은 접속 파일 쓰기 · 내 PC 에 맞는 한 줄만 · <아이디> 는 내 아이디로 · 터미널 창 · 탭마다 한 번
-export KUBECONFIG=~/Downloads/<아이디>.kubeconfig           # Mac
-$env:KUBECONFIG="$HOME\Downloads\<아이디>.kubeconfig"       # Windows (PowerShell)
+cd ~/k8s-study                     # 오늘 명령은 전부 이 폴더에서 칩니다
+ls
 ```
 
 나와야 할 화면 (예시)
 
 ```text
-PS> cd ~
-PS> git clone https://github.com/diqksrk/k8s-study.git
-Cloning into 'k8s-study'...
-PS> cd k8s-study
+PS> cd ~/k8s-study
 PS> ls
-HANDS_ON.md  README.md  demo-app  docs  labs  solutions   ← 이렇게 보이면 맞는 폴더 (Windows 는 표 모양)
+HANDS_ON.md  README.md  bin  demo-app  docs  kubeconfig  labs  solutions    ← 이렇게 보이면 맞는 폴더
+labs 는 오늘 고칠 파일 · solutions 는 완성본 · kubeconfig 는 내 칸에 들어가는 열쇠 (남에게 보내지 않기)
 ```
 
-**확인** — ls 에 labs · docs · HANDS_ON.md 가 보이면 맞는 폴더입니다. ③ 도 이 창에서 칩니다.
+**확인** — labs · solutions · kubeconfig 가 보이면 맞는 폴더입니다(Windows 는 표의 Name 열). ③ 도 이 창에서 칩니다.
 
-**막히면** — git 이 없으면 Code → Download ZIP · already exists 면 이미 받은 것(cd k8s-study) · 새 창은 KUBECONFIG 줄부터.
+**막히면** — 폴더가 없으면 ① 의 압축 풀기부터 · 새 창 · 새 탭은 cd ~/k8s-study 부터.
 
-실습 명령은 전부 **이 폴더(`k8s-study`) 맨 위**에서 칩니다. `labs` 안으로 더 들어가지 않습니다. `KUBECONFIG` 줄은 지금 연 터미널 창에만 적용되니, **창 · 탭을 새로 열면 다시** 칩니다. (창마다 치기 번거로우면 접속 파일을 `~/.kube/config` 로 복사해 둡니다. [접속 가이드](docs/접속가이드.md) 2번 · 그러면 이 줄은 건너뜁니다.) Mac 에서 `parse error near '>'` 가 나오면 `<아이디>` 를 내 아이디로 바꾸지 않은 것입니다.
+실습 명령은 전부 **이 폴더(`k8s-study`) 맨 위**에서 칩니다. `labs` 안으로 더 들어가지 않습니다. 새 창 · 새 탭을 열면 `cd ~/k8s-study` 부터 칩니다. 접속 설정은 ① 에서 한 번 해 두었으니 다시 칠 것은 없습니다.
 
 ### ③ 내 칸에 접속해 보기
 
@@ -374,7 +373,7 @@ demo-6d8f9b7c5-h5t2r   1/1   Running             0     4s
 
 **확인** — 새 이름의 파드가 생기고, From 에 replicaset-controller 가 보입니다. 지운 파드를 다시 만든 건 레플리카셋 컨트롤러입니다.
 
-**막히면** — 새 탭에서 'host is down' 이나 다른 칸이 보이면 그 탭에서 KUBECONFIG 줄부터 다시 (실습 준비 장).
+**막히면** — 새 탭에서 kubectl 이 안 되거나 다른 칸이 보이면 터미널을 닫았다 다시 엽니다 (Windows).
 
 ### ③ 레이블을 바꾸면
 
@@ -892,4 +891,9 @@ kubectl apply -f solutions/02-deployment -f solutions/03-service
 
 ## 끝나고
 
-디플로이먼트 `demo` · 서비스 `demo` · 파드 `curl` 은 2회차에도 이어 씁니다. 그대로 둡니다. `broken` 이 붙은 파일과 `shop` 은 지워도 됩니다. 접속 파일(`<아이디>.kubeconfig`)은 남에게 보내지 않습니다.
+디플로이먼트 `demo` · 서비스 `demo` · 파드 `curl` 은 2회차에도 이어 씁니다. 그대로 둡니다. `broken` 이 붙은 파일과 `shop` 은 지워도 됩니다. 접속 파일(`k8s-study/kubeconfig`)은 남에게 보내지 않습니다.
+
+스터디가 모두 끝나면 접속 설정을 지웁니다. 원래 쓰던 쿠버네티스 설정으로 돌아갑니다.
+
+- Windows — `[Environment]::SetEnvironmentVariable("KUBECONFIG", $null, "User")` 를 치고 터미널을 새로 엽니다.
+- Mac — `~/.zshrc` 의 `export KUBECONFIG=~/k8s-study/kubeconfig` 줄을 지웁니다.
