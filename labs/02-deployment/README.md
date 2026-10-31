@@ -1,6 +1,9 @@
 # 실습 2. 디플로이먼트
 
-"파드 3개" 를 선언해 두면, 쿠버네티스가 그 수를 계속 맞춰 주는 것을 봅니다.
+"파드 3개" 를 선언해 두면, 쿠버네티스가 그 수를 계속 맞춰 주는 것을 봅니다. 명령은 모두 **저장소 맨 위 폴더(`~/k8s-study`)**에서 칩니다.
+
+> 실습 1 의 `demo-broken` 이 아직 보이면 `kubectl delete pod demo-broken` 으로 지웁니다. 이름 뒤에 임의 문자가 없는 파드는 주인(레플리카셋)이 없어서 지우면 그대로 사라집니다.
+> 터미널 탭을 새로 열면 그 탭에서도 접속 파일 줄(`export KUBECONFIG=…` 또는 `$env:KUBECONFIG=…`)을 다시 칩니다.
 
 ## 1. TODO 채우고 띄우기
 
@@ -80,6 +83,14 @@ kubectl rollout status deployment demo
 kubectl apply -f labs/02-deployment/deployment.yaml
 kubectl get pods
 ```
+
+지금까지 무슨 일이 있었는지는 디플로이먼트의 Events 에 시간순으로 남습니다:
+
+```powershell
+kubectl describe deployment demo
+```
+
+맨 아래에 `Scaled up replica set … from 0 to 3` 처럼 개수가 바뀐 줄이 나옵니다. 없는 버전으로 바꿨을 때 새 레플리카셋이 `0 to 1`, 되돌렸을 때 `1 to 0` 이 된 것까지 보입니다. 4번(scale)을 했다면 `3 to 5`, `5 to 3` 도 있습니다.
 
 ## 정리
 

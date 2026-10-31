@@ -4,46 +4,96 @@
 
 | 실습 | 폴더 | 하는 일 |
 |---|---|---|
+| 0. 준비 · 접속 | — | kubectl 확인, 저장소 받기, 접속 파일, 내 칸에 접속 |
 | 1. 파드 | `labs/01-pod` | 띄우고 들여다보기, Events 읽기, 고장 1 |
 | 2. 디플로이먼트 | `labs/02-deployment` | 지워도 다시 생기는 파드, 레이블, 없는 버전으로 바꾸기 |
 | 3. 서비스 | `labs/03-service` | 서비스 이름으로 부르기, 파드를 갈아엎어도 그대로, 고장 2 |
 | 4. 컨피그맵 · 시크릿 | `labs/04-config` | 설정만 바꿔서 앱 바꾸기, 시크릿은 숨겨지지 않는다, 고장 3 · 4 |
 | 5. 종합 수리 | `labs/05-fix-it` | 두 군데 망가진 앱 고치기 (힌트 없음) |
 
-## 시작 전에
+## 실습 0. 준비 · 접속
 
-**1. 실습 저장소 받기** — 홈 폴더에 받고 그 폴더로 들어갑니다. 실습 명령은 전부 **이 폴더(`k8s-study`) 맨 위**에서 칩니다. `labs` 안으로 더 들어가지 않습니다.
+내 PC 에서 클러스터의 내 칸(네임스페이스 `k8s-study-<아이디>`)에 붙는 데까지 합니다. 받을 것은 두 가지, **kubectl** 과 1:1 로 받은 **접속 파일 `<아이디>.kubeconfig`** 입니다. AWS 계정은 필요 없습니다. 접속 파일에는 내 칸에 들어가는 열쇠(토큰)가 들어 있으니 다른 사람에게 넘기지 않습니다.
+
+### ① kubectl 준비
+
+스터디 전에 [접속 가이드](docs/접속가이드.md) 대로 설치해 두었으면 확인만 합니다.
+
+- Windows — 받은 `kubectl.exe` 를 접속 가이드 1번대로 `$HOME\bin` 에 넣고, **터미널을 닫았다가 새로 엽니다**.
+- Mac — `brew install kubectl`. 그리고 한 번만 `echo 'setopt interactivecomments' >> ~/.zshrc` 를 치고 터미널을 새로 엽니다. 이 가이드의 명령을 줄 끝 `# 설명` 까지 붙여 넣어도 에러가 나지 않게 하는 설정입니다(Mac 기본 터미널은 `#` 뒤를 설명으로 보지 않습니다).
 
 ```powershell
-cd ~
+kubectl version --client
+```
+
+나와야 할 화면 (예시)
+
+```text
+Client Version: v1.34.13
+Kustomize Version: v5.7.1
+```
+
+**확인** — `Client Version` 줄이 나오면 됩니다. 버전 숫자는 조금 달라도 괜찮습니다.
+
+**막히면** — `'kubectl' 용어가 ... 인식되지 않습니다` 는 설치 뒤에 터미널을 새로 열지 않은 경우입니다.
+
+### ② 저장소 받고 접속 파일 쓰기
+
+1:1 로 받은 접속 파일을 다운로드 폴더에 두고, 실습 저장소를 받아 그 폴더로 들어갑니다.
+
+```powershell
+cd ~                                               # 홈 폴더에서
 git clone https://github.com/diqksrk/k8s-study.git
-cd k8s-study
-ls          # labs · docs · HANDS_ON.md 가 보이면 맞는 폴더 (Windows 는 표 모양으로 나옵니다)
+cd k8s-study                                       # 오늘 명령은 전부 이 폴더에서 칩니다
+# 받은 접속 파일 쓰기 · 내 PC 에 맞는 한 줄만 · <아이디> 는 내 아이디로 · 터미널 창 · 탭마다 한 번
+export KUBECONFIG=~/Downloads/<아이디>.kubeconfig           # Mac
+$env:KUBECONFIG="$HOME\Downloads\<아이디>.kubeconfig"       # Windows (PowerShell)
 ```
 
-git 이 없으면 [저장소 페이지](https://github.com/diqksrk/k8s-study)의 **Code → Download ZIP** 으로 받아 홈 폴더에 풀고, 폴더 이름을 `k8s-study` 로 맞춥니다.
+나와야 할 화면 (예시)
 
-**2. 접속 파일 쓰기** — 1:1 로 받은 `<아이디>.kubeconfig` 를 다운로드 폴더에 둔 채로, 내 PC 에 맞는 한 줄만 칩니다. `<아이디>` 는 내 아이디로 바꿉니다. 이 줄은 지금 연 터미널 창에만 적용되니, **창을 새로 열면 다시** 칩니다. 원래 쓰던 다른 쿠버네티스 설정은 건드리지 않습니다.
-
-```bash
-# Mac
-export KUBECONFIG=~/Downloads/<아이디>.kubeconfig
+```text
+PS> cd ~
+PS> git clone https://github.com/diqksrk/k8s-study.git
+Cloning into 'k8s-study'...
+PS> cd k8s-study
+PS> ls
+HANDS_ON.md  README.md  demo-app  docs  labs  solutions   ← 이렇게 보이면 맞는 폴더 (Windows 는 표 모양)
 ```
+
+**확인** — ls 에 labs · docs · HANDS_ON.md 가 보이면 맞는 폴더입니다. ③ 도 이 창에서 칩니다.
+
+**막히면** — Mac 은 먼저 setopt interactivecomments 한 줄 · git 이 없으면 Code → Download ZIP · 새 창은 KUBECONFIG 줄부터.
+
+실습 명령은 전부 **이 폴더(`k8s-study`) 맨 위**에서 칩니다. `labs` 안으로 더 들어가지 않습니다. `KUBECONFIG` 줄은 지금 연 터미널 창에만 적용되니, **창 · 탭을 새로 열면 다시** 칩니다. ([접속 가이드](docs/접속가이드.md) 대로 `~/.kube/config` 에 미리 넣어 두었다면 이 줄은 건너뜁니다.) Mac 에서 `parse error near '>'` 가 나오면 `<아이디>` 를 내 아이디로 바꾸지 않은 것입니다.
+
+### ③ 내 칸에 접속해 보기
+
+내 접속 파일로 클러스터에 붙어서, 내 칸과 권한을 확인합니다.
 
 ```powershell
-# Windows (PowerShell)
-$env:KUBECONFIG="$HOME\Downloads\<아이디>.kubeconfig"
+kubectl config view --minify          # namespace 줄이 내 칸
+kubectl get pods                      # 내 칸은 아직 비어 있음
+kubectl get nodes                     # 노드(서버)는 보기만 됨
 ```
 
-([접속 가이드](docs/접속가이드.md) 대로 `~/.kube/config` 에 미리 넣어 두었다면 이 단계는 건너뜁니다.)
+나와야 할 화면 (예시)
 
-**3. 확인**
-
-```powershell
-kubectl config view --minify      # namespace: k8s-study-<아이디>
-kubectl get pods                  # No resources found in k8s-study-<아이디> namespace.
-kubectl get nodes                 # 노드 3대가 Ready (노드는 보기만 할 수 있습니다)
+```text
+PS> kubectl config view --minify
+    namespace: k8s-study-user1
+PS> kubectl get pods
+No resources found in k8s-study-user1 namespace.
+PS> kubectl get nodes
+NAME                                                STATUS   ROLES    AGE   VERSION
+ip-192-168-11-197.ap-northeast-2.compute.internal   Ready    <none>   6m    v1.34.12-eks-577a51e
+ip-192-168-58-30.ap-northeast-2.compute.internal    Ready    <none>   6m    v1.34.12-eks-577a51e
+ip-192-168-64-145.ap-northeast-2.compute.internal   Ready    <none>   6m    v1.34.12-eks-577a51e
 ```
+
+**확인** — namespace 가 내 칸이고, get pods 는 비어 있고, 노드 3대가 Ready 면 정상입니다.
+
+**막히면** — Unable to connect · Unauthorized 가 나오면 접속 파일 문제입니다. docs/접속가이드.md 의 '자주 막히는 곳'.
 
 - 터미널은 Windows 는 **Windows Terminal + PowerShell**, Mac 은 기본 **터미널**입니다. 새 탭은 Windows `Ctrl+Shift+T`, Mac `Cmd+T`.
 - YAML 의 `# TODO` 줄은 VS Code 같은 편집기로 고칩니다(메모장은 들여쓰기가 깨지기 쉽습니다).
@@ -215,6 +265,7 @@ No resources found in k8s-study-user1 namespace.
 kubectl apply -f labs/01-pod/pod-broken.yaml
 kubectl get pods -w                              # STATUS 를 보고 Ctrl+C
 kubectl describe pod demo-broken                 # 실마리는 맨 아래에
+kubectl delete -f labs/01-pod/pod-broken.yaml    # 고쳐서 Running 을 본 뒤 정리
 ```
 
 나와야 할 화면 (예시)
@@ -227,7 +278,7 @@ demo-broken   0/1     ErrImagePull        0          4s
 demo-broken   0/1     ImagePullBackOff    0          17s
 ```
 
-**확인** — pod-broken.yaml 을 고쳐 다시 apply → Running 이면 성공. 끝나면  kubectl delete -f labs/01-pod/pod-broken.yaml.
+**확인** — pod-broken.yaml 을 고쳐 다시 apply → Running 이면 성공. 그다음 맨 아래 명령으로 꼭 정리합니다.
 
 **막히면** — 이미지를 받는 건 내 PC 가 아니라 노드의 kubelet 입니다.
 
@@ -288,6 +339,8 @@ demo-6d8f9b7c5-h5t2r   1/1   Running             0     4s
 
 **확인** — 새 이름의 파드가 생기고, From 에 replicaset-controller 가 보입니다. 지운 파드를 다시 만든 건 레플리카셋 컨트롤러입니다.
 
+**막히면** — 새 탭에서 'host is down' 이나 다른 칸이 보이면 그 탭에서 KUBECONFIG 줄부터 다시 (실습 준비 장).
+
 ### ③ 레이블을 바꾸면
 
 파드 하나의 레이블을 바꿔, 레플리카셋이 무엇으로 세는지 봅니다.
@@ -346,6 +399,7 @@ kubectl apply -f labs/02-deployment/deployment-badtag.yaml
 kubectl get pods
 kubectl rollout status deployment demo                       # 끝나지 않으니 잠깐 보고 Ctrl+C
 kubectl apply -f labs/02-deployment/deployment.yaml          # 되돌리기
+kubectl describe deployment demo                             # 맨 아래 Events: 지금까지 개수가 바뀐 기록
 ```
 
 나와야 할 화면 (예시)
@@ -360,7 +414,7 @@ demo-6d8f9b7c5-w8k2d   1/1     Running            0          3m
 (되돌린 뒤)  1.0 파드 3개만 Running
 ```
 
-**확인** — 기존 1.0 파드 3개가 그대로 Running 입니다. 되돌리기 apply 뒤 get pods 에 3개 Running 이면 끝.
+**확인** — 기존 1.0 파드 3개가 그대로 Running 입니다. 되돌린 뒤 describe 맨 아래에 새 레플리카셋 0 → 1 → 0 이 보이면 끝.
 
 **막히면** — 디플로이먼트 demo 는 실습 3 에서 그대로 씁니다. 지우지 마세요.
 
@@ -370,7 +424,7 @@ demo-6d8f9b7c5-w8k2d   1/1     Running            0          3m
 
 ## 실습 3. 서비스 — `labs/03-service`
 
-파드 IP 는 계속 바뀌어도 서비스 이름으로는 계속 접속되는 것을 봅니다. 이번 실습의 curl 은 전부 내 PC 가 아니라 client 파드 안에서 칩니다(명령 앞의 `kubectl exec client --`).
+파드 IP 는 계속 바뀌어도 서비스 이름으로는 계속 접속되는 것을 봅니다. 이번 실습의 curl 은 전부 내 PC 가 아니라 curl 파드 안에서 칩니다(명령 앞의 `kubectl exec curl --`). 서비스 이름과 ClusterIP 는 클러스터 안에서만 통하기 때문입니다. 앞의 `curl` 은 파드 이름, 뒤의 `curl` 은 그 안에서 실행할 프로그램입니다.
 
 > 앞 실습을 못 끝냈으면 먼저: `kubectl apply -f solutions/02-deployment`
 
@@ -380,7 +434,7 @@ service.yaml 의 셀렉터를 채우고, 서비스 뒤에 어떤 파드가 붙�
 
 ```powershell
 # labs/03-service/service.yaml 의  app: TODO  →  app: demo
-kubectl apply -f labs/03-service/service.yaml -f labs/03-service/client.yaml
+kubectl apply -f labs/03-service/service.yaml -f labs/03-service/curl.yaml   # curl 파드 = 부르는 쪽
 kubectl get svc demo
 kubectl get endpointslices -l kubernetes.io/service-name=demo
 ```
@@ -389,11 +443,11 @@ kubectl get endpointslices -l kubernetes.io/service-name=demo
 
 ```text
 PS> kubectl get svc demo
-NAME   TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
-demo   ClusterIP   10.100.12.7   <none>        80/TCP    6s
+NAME   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+demo   ClusterIP   10.100.183.126   <none>        80/TCP    6s
 PS> kubectl get endpointslices -l kubernetes.io/service-name=demo
-NAME         ADDRESSTYPE   PORTS   ENDPOINTS                                  AGE
-demo-7xk2p   IPv4          8080    192.168.44.71,192.168.58.3,192.168.61.40   6s
+NAME         ADDRESSTYPE   PORTS   ENDPOINTS                                     AGE
+demo-qr5pp   IPv4          8080    192.168.63.161,192.168.40.27,192.168.40.144   6s
 ```
 
 **확인** — ENDPOINTS 의 IP 3개가 kubectl get pods -o wide 의 파드 IP 와 같습니다.
@@ -402,21 +456,22 @@ demo-7xk2p   IPv4          8080    192.168.44.71,192.168.58.3,192.168.61.40   6s
 
 ### ② 이름으로 부르기
 
-client 파드 안에서 서비스 이름 demo 로 부릅니다.
+curl 파드 안에서 서비스 이름 demo 로 부릅니다.
 
 ```powershell
-kubectl exec client -- curl -s http://demo/
-1..6 | ForEach-Object { kubectl exec client -- curl -s http://demo/pod }
+kubectl exec curl -- curl -s http://demo/
+1..6 | ForEach-Object { kubectl exec curl -- curl -s http://demo/pod }             # Windows
+for i in {1..6}; do kubectl exec curl -- curl -s http://demo/pod; done              # Mac
 ```
 
 나와야 할 화면 (예시)
 
 ```text
-PS> kubectl exec client -- curl -s http://demo/
+PS> kubectl exec curl -- curl -s http://demo/
 pod      : demo-6d8f9b7c5-m3n8v
 version  : 1.0
 ...
-PS> 1..6 | ForEach-Object { kubectl exec client -- curl -s http://demo/pod }
+PS> 1..6 | ForEach-Object { kubectl exec curl -- curl -s http://demo/pod }
 demo-6d8f9b7c5-m3n8v
 demo-6d8f9b7c5-h5t2r
 demo-6d8f9b7c5-m3n8v
@@ -425,7 +480,7 @@ demo-6d8f9b7c5-w8k2d   …
 
 **확인** — 파드 이름이 두 개 이상 섞여 나오면 성공입니다. 같은 이름이 연달아 나와도 정상입니다.
 
-**막히면** — Uri: 를 묻거나 Could not resolve host 면 내 PC 에서 친 것입니다. 꼭  kubectl exec client --  를 붙입니다.
+**막히면** — Uri: 를 묻거나 's' 가 모호하다는 에러 · Could not resolve host 면 내 PC 에서 친 것. 꼭  kubectl exec curl --  를 붙입니다.
 
 ### ③ 파드를 전부 갈아엎어도
 
@@ -434,7 +489,8 @@ demo-6d8f9b7c5-w8k2d   …
 ```powershell
 kubectl delete pods -l app=demo
 kubectl get endpointslices -l kubernetes.io/service-name=demo
-1..6 | ForEach-Object { kubectl exec client -- curl -s http://demo/pod }      # 실패하면 10~20초 뒤 다시
+1..6 | ForEach-Object { kubectl exec curl -- curl -s http://demo/pod }    # Windows · 실패면 20초 뒤
+for i in {1..6}; do kubectl exec curl -- curl -s http://demo/pod; done     # Mac
 ```
 
 나와야 할 화면 (예시)
@@ -442,8 +498,8 @@ kubectl get endpointslices -l kubernetes.io/service-name=demo
 ```text
 PS> kubectl get endpointslices -l kubernetes.io/service-name=demo
 NAME         ADDRESSTYPE   PORTS   ENDPOINTS                                   AGE
-demo-7xk2p   IPv4          8080    192.168.47.9,192.168.53.120,192.168.62.31   4m     ← IP 가 다 바뀜
-PS> 1..6 | ForEach-Object { kubectl exec client -- curl -s http://demo/pod }
+demo-qr5pp   IPv4          8080    192.168.47.9,192.168.53.120,192.168.62.31   4m     ← IP 가 다 바뀜
+PS> 1..6 | ForEach-Object { kubectl exec curl -- curl -s http://demo/pod }
 command terminated with exit code 7        ← 지운 직후: 새 파드가 아직 뜨는 중 (여러 줄)
 (10~20초 뒤 다시 치면)
 demo-6d8f9b7c5-p2v8n
@@ -459,18 +515,18 @@ demo-6d8f9b7c5-z4c6q   …
 짧은 이름이 어떻게 찾아지는지 보고, 옆 사람 칸의 서비스를 부릅니다.
 
 ```powershell
-kubectl exec client -- cat /etc/resolv.conf
-kubectl exec client -- curl -s http://demo.<옆 사람 네임스페이스>/pod
+kubectl exec curl -- cat /etc/resolv.conf
+kubectl exec curl -- curl -s http://demo.<옆 사람 네임스페이스>/pod
 ```
 
 나와야 할 화면 (예시)
 
 ```text
-PS> kubectl exec client -- cat /etc/resolv.conf
+PS> kubectl exec curl -- cat /etc/resolv.conf
 search k8s-study-user1.svc.cluster.local svc.cluster.local cluster.local …
 nameserver 10.100.0.10
 options ndots:5
-PS> kubectl exec client -- curl -s http://demo.k8s-study-user2/pod
+PS> kubectl exec curl -- curl -s http://demo.k8s-study-user2/pod
 demo-7f4c8d9b6-k3j7m                ← 옆 사람 파드
 ```
 
@@ -482,7 +538,7 @@ demo-7f4c8d9b6-k3j7m                ← 옆 사람 파드
 
 ```powershell
 kubectl apply -f labs/03-service/service-broken.yaml
-kubectl exec client -- curl -sS -m 3 http://demo-broken/
+kubectl exec curl -- curl -sS -m 3 http://demo-broken/
 # 실마리: get endpointslices · describe svc demo-broken · get pods --show-labels
 ```
 
@@ -491,16 +547,16 @@ kubectl exec client -- curl -sS -m 3 http://demo-broken/
 ```text
 PS> kubectl apply -f labs/03-service/service-broken.yaml
 service/demo-broken created
-PS> kubectl exec client -- curl -sS -m 3 http://demo-broken/
+PS> kubectl exec curl -- curl -sS -m 3 http://demo-broken/
 curl: (7) Failed to connect to demo-broken port 80 after 1 ms: Could not connect to server
 command terminated with exit code 7
 ```
 
 **확인** — service-broken.yaml 을 고쳐 다시 apply → curl 이 앱 화면을 돌려주면 성공.
 
-**막히면** — 끝나면  kubectl delete -f labs/03-service/service-broken.yaml  · 서비스 demo 와 client 는 지우지 마세요.
+**막히면** — 끝나면  kubectl delete -f labs/03-service/service-broken.yaml  · 서비스 demo 와 curl 파드는 지우지 마세요.
 
-서비스 `demo` 와 파드 `client` 는 실습 4 · 5 에서 씁니다. **지우지 마세요.**
+서비스 `demo` 와 파드 `curl` 은 실습 4 · 5 에서 씁니다. **지우지 마세요.**
 
 ---
 
@@ -517,8 +573,9 @@ command terminated with exit code 7
 ```powershell
 kubectl apply -f labs/04-config/configmap.yaml -f labs/04-config/secret.yaml
 kubectl get secret demo-secret -o yaml                 # data 칸을 봅니다
-$b64 = kubectl get secret demo-secret -o jsonpath='{.data.APP_PASSWORD}'
+$b64 = kubectl get secret demo-secret -o jsonpath='{.data.APP_PASSWORD}'      # Windows 두 줄
 [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b64))
+kubectl get secret demo-secret -o jsonpath='{.data.APP_PASSWORD}' | base64 -d; echo     # Mac 한 줄
 ```
 
 나와야 할 화면 (예시)
@@ -529,11 +586,13 @@ secret/demo-secret created
 PS> kubectl get secret demo-secret -o yaml
 data:
   APP_PASSWORD: czNjcjN0LXBhc3M=
+    kubectl.kubernetes.io/last-applied-configuration: |      ← 조금 아래 metadata 에
+      {…"stringData":{"APP_PASSWORD":"s3cr3t-pass"}…}
 PS> [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b64))
 s3cr3t-pass
 ```
 
-**확인** — data 는 알아보기 힘든 문자열이지만 한 줄로 원래 값이 나옵니다. 암호화가 아니라 base64 입니다.
+**확인** — data 는 알아보기 힘든 문자열이지만 한 줄로 원래 값이 나옵니다. 바로 아래 apply 기록에는 평문이 그대로 있습니다.
 
 ### ② 디플로이먼트에 넣기
 
@@ -543,13 +602,13 @@ TODO 두 줄에 이름을 채워, 컨피그맵 · 시크릿을 환경변수로 �
 # labs/04-config/deployment.yaml 의  name: TODO  두 줄 →  demo-config ,  demo-secret
 kubectl apply -f labs/04-config/deployment.yaml
 kubectl get pods -w                               # 새 파드로 바뀌면 Ctrl+C
-kubectl exec client -- curl -s http://demo/
+kubectl exec curl -- curl -s http://demo/
 ```
 
 나와야 할 화면 (예시)
 
 ```text
-PS> kubectl exec client -- curl -s http://demo/
+PS> kubectl exec curl -- curl -s http://demo/
 pod      : demo-7c9f6b8d4-r2x5k
 version  : 1.0
 profile  : dev
@@ -569,10 +628,10 @@ password : s3****
 ```powershell
 # configmap.yaml 의 APP_GREETING 값을 아무거나로 바꾸고
 kubectl apply -f labs/04-config/configmap.yaml
-kubectl exec client -- curl -s http://demo/          # 아직 그대로
+kubectl exec curl -- curl -s http://demo/          # 아직 그대로
 kubectl rollout restart deployment demo
 kubectl rollout status deployment demo
-kubectl exec client -- curl -s http://demo/          # 이번엔 바뀜
+kubectl exec curl -- curl -s http://demo/          # 이번엔 바뀜
 ```
 
 나와야 할 화면 (예시)
@@ -580,12 +639,13 @@ kubectl exec client -- curl -s http://demo/          # 이번엔 바뀜
 ```text
 configmap/demo-config configured
 greeting : hello from configmap           ← 아직 그대로
-deployment.apps/demo restarted
-deployment "demo" successfully rolled out
+deployment "demo" successfully rolled out      ← restart · status 뒤
 greeting : hi from user1                  ← 바뀜
 ```
 
-**확인** — restart 전엔 그대로, 뒤엔 바뀝니다. SPRING_PROFILES_ACTIVE 를 real 로 바꿔 같은 순서로 하면 stage 가 real-cluster 로 바뀝니다.
+**확인** — restart 전엔 그대로, 뒤엔 바뀝니다. SPRING_PROFILES_ACTIVE 를 real 로 바꿔 같은 순서로 하면 stage 도 바뀝니다.
+
+**막히면** — rollout status 가 끝나도 앱이 뜨기까지 10초쯤 걸립니다. exit code 7 만 나오면 10초 뒤 다시 (3회차 Readiness Probe).
 
 ### ④ 시크릿은 숨겨지지 않는다 (먼저 끝났으면)
 
@@ -609,6 +669,8 @@ SPRING_PROFILES_ACTIVE=dev
 
 **확인** — APP_PASSWORD 가 평문으로 보입니다. 시크릿은 값을 숨기는 게 아니라 권한을 나누는 장치입니다.
 
+**막히면** — 브라우저가 빈 화면 · 연결 끊김이면 방금 restart 한 앱이 아직 뜨는 중입니다. 10초 뒤 port-forward 부터 다시.
+
 ### ⑤ 고장 3 — 컨테이너가 안 만들어진다
 
 고장 난 디플로이먼트를 띄우고, 원인을 찾아 고칩니다.
@@ -624,7 +686,7 @@ kubectl describe pod -l app=demo-missing          # 실마리는 맨 아래에
 ```text
 PS> kubectl get pods
 NAME                           READY   STATUS                       RESTARTS   AGE
-client                         1/1     Running                      0          40m
+curl                           1/1     Running                      0          40m
 demo-7c9f6b8d4-r2x5k           1/1     Running                      0          5m
 ...
 demo-missing-6b9d7c5f8-q4w2z   0/1     CreateContainerConfigError   0          12s
@@ -670,7 +732,7 @@ kubectl delete -f labs/04-config/broken-missing-config.yaml -f labs/04-config/br
 
 누군가 배포한 앱 `shop` 이 동작하지 않습니다. **두 군데**가 망가져 있습니다. 힌트는 없습니다.
 
-> `client` 파드가 없으면 먼저: `kubectl apply -f solutions/03-service`
+> `curl` 파드가 없으면 먼저: `kubectl apply -f solutions/03-service`
 
 **시작**
 
@@ -681,7 +743,7 @@ kubectl apply -f labs/05-fix-it/shop.yaml
 **목표** — 이 명령이 `greeting : welcome to shop` 이 들어 있는 화면을 돌려주면 성공입니다.
 
 ```powershell
-kubectl exec client -- curl -sS -m 3 http://shop/
+kubectl exec curl -- curl -sS -m 3 http://shop/
 ```
 
 **진단 순서** — 오늘 쓴 순서 그대로입니다. 하나를 고치면 다음 것이 드러납니다.
@@ -728,4 +790,4 @@ kubectl apply -f solutions/02-deployment -f solutions/03-service
 
 ## 끝나고
 
-디플로이먼트 `demo` · 서비스 `demo` · 파드 `client` 는 2회차에도 이어 씁니다. 그대로 둡니다. `broken` 이 붙은 파일과 `shop` 은 지워도 됩니다. 접속 파일(`<아이디>.kubeconfig`)은 남에게 보내지 않습니다.
+디플로이먼트 `demo` · 서비스 `demo` · 파드 `curl` 은 2회차에도 이어 씁니다. 그대로 둡니다. `broken` 이 붙은 파일과 `shop` 은 지워도 됩니다. 접속 파일(`<아이디>.kubeconfig`)은 남에게 보내지 않습니다.

@@ -2,7 +2,7 @@
 
 누군가 배포한 앱 `shop` 이 동작하지 않습니다. **두 군데**가 망가져 있습니다. 힌트는 없습니다.
 
-> `client` 파드가 없으면 먼저: `kubectl apply -f solutions/03-service`
+> `curl` 파드가 없으면 먼저: `kubectl apply -f solutions/03-service`
 
 ## 시작
 
@@ -13,7 +13,7 @@ kubectl apply -f labs/05-fix-it/shop.yaml
 ## 목표
 
 ```powershell
-kubectl exec client -- curl -sS -m 3 http://shop/
+kubectl exec curl -- curl -sS -m 3 http://shop/
 ```
 
 이 명령이 `greeting : welcome to shop` 이 들어 있는 화면을 돌려주면 성공입니다.

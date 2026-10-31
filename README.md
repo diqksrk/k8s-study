@@ -12,7 +12,7 @@
    cd k8s-study
    ```
 
-2. 1:1 로 받은 접속 파일(`<아이디>.kubeconfig`)을 씁니다. Mac 은 `export KUBECONFIG=~/Downloads/<아이디>.kubeconfig`, Windows(PowerShell)는 `$env:KUBECONFIG="$HOME\Downloads\<아이디>.kubeconfig"` 한 줄입니다. 자세한 건 [HANDS_ON.md](HANDS_ON.md) 의 '시작 전에', 미리 해 두려면 [접속 가이드](docs/접속가이드.md).
+2. 1:1 로 받은 접속 파일(`<아이디>.kubeconfig`)을 씁니다. Mac 은 `export KUBECONFIG=~/Downloads/<아이디>.kubeconfig`, Windows(PowerShell)는 `$env:KUBECONFIG="$HOME\Downloads\<아이디>.kubeconfig"` 한 줄입니다. 자세한 건 [HANDS_ON.md](HANDS_ON.md) 의 '실습 0. 준비 · 접속', 미리 해 두려면 [접속 가이드](docs/접속가이드.md). Mac 은 한 번만 `echo 'setopt interactivecomments' >> ~/.zshrc` 를 치고 터미널을 새로 엽니다(명령 줄 끝의 `# 설명` 까지 붙여 넣어도 되게).
 3. `kubectl get pods` 가 `No resources found in k8s-study-<아이디> namespace.` 를 내면 준비 끝입니다.
 4. 터미널은 Windows 는 **Windows Terminal + PowerShell**, Mac 은 기본 **터미널**입니다. 자주 쓰는 명령은 [치트시트](docs/치트시트.md) 에 있습니다.
 

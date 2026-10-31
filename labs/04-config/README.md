@@ -33,7 +33,7 @@ kubectl get pods -w
 파드가 새 것으로 교체되는 걸 보고 `Ctrl+C`.
 
 ```powershell
-kubectl exec client -- curl -s http://demo/
+kubectl exec curl -- curl -s http://demo/
 ```
 
 `profile` 이 `dev`, `stage` 가 `dev-cluster`, `greeting` 이 컨피그맵 값, `password` 에 앞 두 글자가 보이면 성공입니다.
@@ -46,7 +46,7 @@ kubectl exec client -- curl -s http://demo/
 
 ```powershell
 kubectl apply -f labs/04-config/configmap.yaml
-kubectl exec client -- curl -s http://demo/
+kubectl exec curl -- curl -s http://demo/
 ```
 
 그대로입니다. 환경변수는 컨테이너가 **시작할 때 한 번** 들어가기 때문입니다. 파드를 새로 띄우면:
@@ -54,7 +54,7 @@ kubectl exec client -- curl -s http://demo/
 ```powershell
 kubectl rollout restart deployment demo
 kubectl rollout status deployment demo
-kubectl exec client -- curl -s http://demo/
+kubectl exec curl -- curl -s http://demo/
 ```
 
 이번엔 바뀝니다.
