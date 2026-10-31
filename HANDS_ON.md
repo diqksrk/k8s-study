@@ -4,7 +4,7 @@
 
 | 실습 | 폴더 | 하는 일 |
 |---|---|---|
-| 0. 준비 · 접속 | — | kubectl 확인, 저장소 받기, 접속 파일, 내 칸에 접속 |
+| 0. 준비 · 접속 | — | 받은 파일로 kubectl 넣기, 저장소 받기, 접속 파일, 내 칸에 접속 |
 | 1. 파드 | `labs/01-pod` | 띄우고 들여다보기, Events 읽기, 고장 1 |
 | 2. 디플로이먼트 | `labs/02-deployment` | 지워도 다시 생기는 파드, 레이블, 없는 버전으로 바꾸기 |
 | 3. 서비스 | `labs/03-service` | 서비스 이름으로 부르기, 파드를 갈아엎어도 그대로, 고장 2 |
@@ -13,16 +13,30 @@
 
 ## 실습 0. 준비 · 접속
 
-내 PC 에서 클러스터의 내 칸(네임스페이스 `k8s-study-<아이디>`)에 붙는 데까지 합니다. 받을 것은 두 가지, **kubectl** 과 1:1 로 받은 **접속 파일 `<아이디>.kubeconfig`** 입니다. AWS 계정은 필요 없습니다. 접속 파일에는 내 칸에 들어가는 열쇠(토큰)가 들어 있으니 다른 사람에게 넘기지 않습니다.
+내 PC 에서 클러스터의 내 칸(네임스페이스 `k8s-study-<아이디>`)에 붙는 데까지 합니다. 스터디를 시작할 때 1:1 메시지로 파일을 받습니다. AWS 계정은 필요 없습니다.
 
-### ① kubectl 준비
+- Windows — `kubectl.exe`, 접속 파일 `<아이디>.kubeconfig`, 이 실습 가이드(PDF)
+- Mac — 접속 파일 `<아이디>.kubeconfig`, 이 실습 가이드(PDF). kubectl 은 brew 로 설치합니다
 
-스터디 전에 [접속 가이드](docs/접속가이드.md) 대로 설치해 두었으면 확인만 합니다.
+받은 파일은 **다운로드 폴더**에 저장합니다. 아래 명령은 전부 파일이 다운로드 폴더에 있다고 보고 씁니다. 접속 파일에는 내 칸에 들어가는 열쇠(토큰)가 들어 있으니 다른 사람에게 넘기지 않습니다.
 
-- Windows — 받은 `kubectl.exe` 를 접속 가이드 1번대로 `$HOME\bin` 에 넣고, **터미널을 닫았다가 새로 엽니다**.
-- Mac — `brew install kubectl`. 그리고 한 번만 `echo 'setopt interactivecomments' >> ~/.zshrc` 를 치고 터미널을 새로 엽니다. 이 가이드의 명령을 줄 끝 `# 설명` 까지 붙여 넣어도 에러가 나지 않게 하는 설정입니다(Mac 기본 터미널은 `#` 뒤를 설명으로 보지 않습니다).
+### ① kubectl 넣기
+
+**Windows** — 받은 `kubectl.exe` 를 내 계정 폴더 `bin` 에 넣고 PATH 에 더합니다. 관리자 권한은 필요 없습니다. PowerShell 에서 한 줄씩:
 
 ```powershell
+New-Item -ItemType Directory -Force $HOME\bin | Out-Null; Copy-Item ~\Downloads\kubectl.exe $HOME\bin\
+$p = [Environment]::GetEnvironmentVariable("Path", "User")
+[Environment]::SetEnvironmentVariable("Path", "$p;$HOME\bin", "User")       # 다음에 여는 창부터
+$env:Path += ";$HOME\bin"                                                  # 지금 창에도
+kubectl version --client
+```
+
+**Mac** — 터미널에서 한 줄씩. 첫 줄은 이 가이드의 명령을 줄 끝 `# 설명` 까지 붙여 넣어도 에러가 나지 않게 하는 설정입니다(Mac 기본 터미널은 `#` 뒤를 설명으로 보지 않습니다). 그래서 첫 줄을 치기 전에는 `#` 이 붙은 줄을 붙여 넣지 않습니다.
+
+```bash
+setopt interactivecomments; echo 'setopt interactivecomments' >> ~/.zshrc
+brew install kubectl
 kubectl version --client
 ```
 
@@ -35,7 +49,7 @@ Kustomize Version: v5.7.1
 
 **확인** — `Client Version` 줄이 나오면 됩니다. 버전 숫자는 조금 달라도 괜찮습니다.
 
-**막히면** — `'kubectl' 용어가 ... 인식되지 않습니다` 는 설치 뒤에 터미널을 새로 열지 않은 경우입니다.
+**막히면** — Windows 에서 `'kubectl' 용어가 ... 인식되지 않습니다` 는 `$env:Path` 줄을 빠뜨렸거나 다른 창에서 친 경우입니다. 같은 창에서 다시 칩니다. `Copy-Item` 이 파일을 못 찾으면 `kubectl.exe` 가 다운로드 폴더가 아닌 곳에 저장된 것입니다. 실행할 때 보안 경고가 나오면 `Unblock-File $HOME\bin\kubectl.exe`. Mac 에 brew 가 없으면 옆 사람과 한 화면으로 하고, 끝나고 설치합니다.
 
 ### ② 저장소 받고 접속 파일 쓰기
 
@@ -63,9 +77,9 @@ HANDS_ON.md  README.md  demo-app  docs  labs  solutions   ← 이렇게 보이�
 
 **확인** — ls 에 labs · docs · HANDS_ON.md 가 보이면 맞는 폴더입니다. ③ 도 이 창에서 칩니다.
 
-**막히면** — Mac 은 먼저 setopt interactivecomments 한 줄 · git 이 없으면 Code → Download ZIP · 새 창은 KUBECONFIG 줄부터.
+**막히면** — git 이 없으면 Code → Download ZIP · already exists 면 이미 받은 것(cd k8s-study) · 새 창은 KUBECONFIG 줄부터.
 
-실습 명령은 전부 **이 폴더(`k8s-study`) 맨 위**에서 칩니다. `labs` 안으로 더 들어가지 않습니다. `KUBECONFIG` 줄은 지금 연 터미널 창에만 적용되니, **창 · 탭을 새로 열면 다시** 칩니다. ([접속 가이드](docs/접속가이드.md) 대로 `~/.kube/config` 에 미리 넣어 두었다면 이 줄은 건너뜁니다.) Mac 에서 `parse error near '>'` 가 나오면 `<아이디>` 를 내 아이디로 바꾸지 않은 것입니다.
+실습 명령은 전부 **이 폴더(`k8s-study`) 맨 위**에서 칩니다. `labs` 안으로 더 들어가지 않습니다. `KUBECONFIG` 줄은 지금 연 터미널 창에만 적용되니, **창 · 탭을 새로 열면 다시** 칩니다. (창마다 치기 번거로우면 접속 파일을 `~/.kube/config` 로 복사해 둡니다. [접속 가이드](docs/접속가이드.md) 2번 · 그러면 이 줄은 건너뜁니다.) Mac 에서 `parse error near '>'` 가 나오면 `<아이디>` 를 내 아이디로 바꾸지 않은 것입니다.
 
 ### ③ 내 칸에 접속해 보기
 
@@ -265,7 +279,6 @@ No resources found in k8s-study-user1 namespace.
 kubectl apply -f labs/01-pod/pod-broken.yaml
 kubectl get pods -w                              # STATUS 를 보고 Ctrl+C
 kubectl describe pod demo-broken                 # 실마리는 맨 아래에
-kubectl delete -f labs/01-pod/pod-broken.yaml    # 고쳐서 Running 을 본 뒤 정리
 ```
 
 나와야 할 화면 (예시)
@@ -278,9 +291,31 @@ demo-broken   0/1     ErrImagePull        0          4s
 demo-broken   0/1     ImagePullBackOff    0          17s
 ```
 
-**확인** — pod-broken.yaml 을 고쳐 다시 apply → Running 이면 성공. 그다음 맨 아래 명령으로 꼭 정리합니다.
+**확인** — pod-broken.yaml 을 고쳐 다시 apply → Running 이면 성공. 지우는 건 바로 다음 '정리' 에서 합니다.
 
 **막히면** — 이미지를 받는 건 내 PC 가 아니라 노드의 kubelet 입니다.
+
+### 정리 — 실습 2 로 넘어가기 전에
+
+고장 1 파드를 지우고, 내 칸이 비었는지 봅니다.
+
+```powershell
+kubectl delete -f labs/01-pod/pod-broken.yaml
+kubectl get pods
+```
+
+나와야 할 화면 (예시)
+
+```text
+PS> kubectl delete -f labs/01-pod/pod-broken.yaml
+pod "demo-broken" deleted from k8s-study-user1 namespace
+PS> kubectl get pods
+No resources found in k8s-study-user1 namespace.
+```
+
+**확인** — 내 칸이 비어 있으면 됩니다. 실습 2 는 빈 칸에서 시작합니다.
+
+**막히면** — demo-pod 가 남아 있으면 ⑤ 를 건너뛴 것입니다 ·  kubectl delete pod demo-pod.
 
 ---
 
@@ -416,9 +451,32 @@ demo-6d8f9b7c5-w8k2d   1/1     Running            0          3m
 
 **확인** — 기존 1.0 파드 3개가 그대로 Running 입니다. 되돌린 뒤 describe 맨 아래에 새 레플리카셋 0 → 1 → 0 이 보이면 끝.
 
-**막히면** — 디플로이먼트 demo 는 실습 3 에서 그대로 씁니다. 지우지 마세요.
+**막히면** — rollout status 는 Ctrl+C 로 끊어도 됩니다. 되돌리기는 그 아래 apply 한 줄입니다.
 
-디플로이먼트 `demo` 는 실습 3 에서 그대로 씁니다. **지우지 마세요.**
+### 정리 — 실습 3 으로 넘어가기 전에
+
+디플로이먼트 demo 와 파드 3개만 남았는지 봅니다.
+
+```powershell
+kubectl get deploy,pods
+kubectl delete pod -l app=other                # app=other 파드가 남아 있을 때만
+```
+
+나와야 할 화면 (예시)
+
+```text
+PS> kubectl get deploy,pods
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/demo   3/3     3            3           12m
+NAME                       READY   STATUS    RESTARTS   AGE
+pod/demo-6d8f9b7c5-h5t2r   1/1     Running   0          8m
+pod/demo-6d8f9b7c5-m3n8v   1/1     Running   0          12m
+pod/demo-6d8f9b7c5-w8k2d   1/1     Running   0          9m
+```
+
+**확인** — demo 3/3 에 Running 파드 3개면 됩니다. 디플로이먼트 demo 는 실습 3 에서 씁니다. 지우지 않습니다.
+
+**막히면** — ImagePullBackOff 파드가 남아 있으면 ⑤ 의 되돌리기(apply deployment.yaml)를 안 한 것입니다.
 
 ---
 
@@ -552,11 +610,33 @@ curl: (7) Failed to connect to demo-broken port 80 after 1 ms: Could not connect
 command terminated with exit code 7
 ```
 
-**확인** — service-broken.yaml 을 고쳐 다시 apply → curl 이 앱 화면을 돌려주면 성공.
+**확인** — service-broken.yaml 을 고쳐 다시 apply → curl 이 앱 화면을 돌려주면 성공. 지우는 건 다음 '정리' 에서.
 
-**막히면** — 끝나면  kubectl delete -f labs/03-service/service-broken.yaml  · 서비스 demo 와 curl 파드는 지우지 마세요.
+### 정리 — 실습 4 로 넘어가기 전에
 
-서비스 `demo` 와 파드 `curl` 은 실습 4 · 5 에서 씁니다. **지우지 마세요.**
+고장 2 서비스를 지우고, 실습 4 · 5 에서 쓸 것만 남았는지 봅니다.
+
+```powershell
+kubectl delete -f labs/03-service/service-broken.yaml
+kubectl get deploy,svc,pods
+```
+
+나와야 할 화면 (예시)
+
+```text
+PS> kubectl get deploy,svc,pods
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/demo   3/3     3            3           25m
+NAME           TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/demo   ClusterIP   10.100.183.126   <none>        80/TCP    14m
+NAME                       READY   STATUS    RESTARTS   AGE
+pod/curl                   1/1     Running   0          14m
+pod/demo-6d8f9b7c5-h5t2r   1/1     Running   0          6m      ← demo 파드 3개
+```
+
+**확인** — 남길 것: 디플로이먼트 · 서비스 demo, 파드 curl (실습 4 · 5 에서 씀). demo-broken 이 없으면 끝.
+
+**막히면** — 서비스 demo 나 curl 파드를 지웠으면  kubectl apply -f solutions/03-service.
 
 ---
 
@@ -692,9 +772,7 @@ demo-7c9f6b8d4-r2x5k           1/1     Running                      0          5
 demo-missing-6b9d7c5f8-q4w2z   0/1     CreateContainerConfigError   0          12s
 ```
 
-**확인** — broken-missing-config.yaml 을 고쳐 다시 apply → demo-missing 파드가 Running 이면 성공.
-
-**막히면** — 고장 4 를 안 하면 여기서 정리:  kubectl delete -f labs/04-config/broken-missing-config.yaml.
+**확인** — broken-missing-config.yaml 을 고쳐 다시 apply → demo-missing 파드가 Running 이면 성공. 지우는 건 '정리' 에서.
 
 ### ⑤ 고장 4 — 떴다가 계속 죽는다 (먼저 끝났으면)
 
@@ -718,13 +796,34 @@ demo-crash-5f7b9d6c4-x8m2p   0/1   CrashLoopBackOff   2 (1s ago)    25s
 
 **확인** — 고쳐서 apply → kubectl rollout restart deployment demo-crash → Running 이면 성공.
 
-**막히면** — 값은 "8080" 처럼 따옴표째 · 끝나면 고장 3 · 4 파일을 둘 다 delete -f 로 정리.
+**막히면** — 값은 "8080" 처럼 따옴표째 · 컨피그맵 값은 글자만 받아서 따옴표가 없으면 apply 가 거절됩니다.
 
-정리 (고장 4 를 안 했으면 앞 파일만):
+### 정리 — 실습 5 로 넘어가기 전에
+
+고장 3 · 4 를 지우고, demo 와 curl 만 남았는지 봅니다.
 
 ```powershell
-kubectl delete -f labs/04-config/broken-missing-config.yaml -f labs/04-config/broken-crash.yaml
+kubectl delete -f labs/04-config/broken-missing-config.yaml
+kubectl delete -f labs/04-config/broken-crash.yaml --ignore-not-found       # 고장 4 를 안 했어도 괜찮음
+kubectl get deploy,svc,pods
 ```
+
+나와야 할 화면 (예시)
+
+```text
+PS> kubectl get deploy,svc,pods
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/demo   3/3     3            3           50m
+NAME           TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/demo   ClusterIP   10.100.183.126   <none>        80/TCP    40m
+NAME                       READY   STATUS    RESTARTS   AGE
+pod/curl                   1/1     Running   0          40m
+pod/demo-7c9f6b8d4-r2x5k   1/1     Running   0          9m      ← demo 파드 3개
+```
+
+**확인** — demo-missing · demo-crash 가 없고, demo 3/3 · 서비스 demo · curl 이 있으면 됩니다.
+
+**막히면** — curl 파드가 없으면  kubectl apply -f solutions/03-service.
 
 ---
 
@@ -739,6 +838,8 @@ kubectl delete -f labs/04-config/broken-missing-config.yaml -f labs/04-config/br
 ```powershell
 kubectl apply -f labs/05-fix-it/shop.yaml
 ```
+
+`shop.yaml` 한 파일에 컨피그맵 `shop-config` · 디플로이먼트 `shop` · 서비스 `shop` 세 개가 `---` 로 나뉘어 들어 있습니다. apply 한 번에 셋 다 만들어집니다.
 
 **목표** — 이 명령이 `greeting : welcome to shop` 이 들어 있는 화면을 돌려주면 성공입니다.
 
@@ -787,6 +888,7 @@ kubectl apply -f solutions/02-deployment -f solutions/03-service
 | `CrashLoopBackOff` | 앱이 떴다가 계속 죽음 | `logs --previous` |
 | `Running` 인데 접속 안 됨 | 서비스 연결 문제 | 엔드포인트 슬라이스, 셀렉터, targetPort |
 | `get pods` 에 파드가 아예 없음 | 내 칸의 쿼터(파드 15개)가 참 | `kubectl describe rs` 의 Events (exceeded quota) |
+| `kubectl logs` 가 거의 비어 있음 | 앱이 로그를 파일로만 씀 | `kubectl exec <파드> -- tail <로그 파일>` (재시작하면 파일도 사라짐) |
 
 ## 끝나고
 

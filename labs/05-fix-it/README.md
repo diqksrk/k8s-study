@@ -10,6 +10,8 @@
 kubectl apply -f labs/05-fix-it/shop.yaml
 ```
 
+`shop.yaml` 한 파일에 컨피그맵 `shop-config` · 디플로이먼트 `shop` · 서비스 `shop` 세 개가 `---` 로 나뉘어 들어 있습니다. apply 한 번에 셋 다 만들어집니다.
+
 ## 목표
 
 ```powershell
