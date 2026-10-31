@@ -27,12 +27,17 @@
 **Windows** — PowerShell 에서 한 줄씩:
 
 ```powershell
-Expand-Archive "$HOME\Downloads\k8s-study.zip" -DestinationPath $HOME   # 홈에 k8s-study 폴더가 생김
+Expand-Archive "$HOME\Downloads\k8s-study.zip" -DestinationPath $HOME -Force
+
 $p = [Environment]::GetEnvironmentVariable("Path", "User")
-[Environment]::SetEnvironmentVariable("Path", "$p;$HOME\k8s-study\bin", "User")             # 이 두 줄은
-[Environment]::SetEnvironmentVariable("KUBECONFIG", "$HOME\k8s-study\kubeconfig", "User")   # 다음 창부터
-$env:Path += ";$HOME\k8s-study\bin"; $env:KUBECONFIG = "$HOME\k8s-study\kubeconfig"         # 지금 창에도
+[Environment]::SetEnvironmentVariable("Path", "$p;$HOME\k8s-study\bin", "User")
+[Environment]::SetEnvironmentVariable("KUBECONFIG", "$HOME\k8s-study\kubeconfig", "User")
+
+$env:Path += ";$HOME\k8s-study\bin"
+$env:KUBECONFIG = "$HOME\k8s-study\kubeconfig"
+
 kubectl version --client
+kubectl get pods
 ```
 
 **Mac** — 터미널에서 한 줄씩. 첫 줄은 이 가이드의 명령을 줄 끝 `# 설명` 까지 붙여 넣어도 에러가 나지 않게 하는 설정입니다(Mac 기본 터미널은 `#` 뒤를 설명으로 보지 않습니다). 그래서 첫 줄부터 칩니다.
@@ -48,13 +53,13 @@ kubectl version --client
 나와야 할 화면 (예시)
 
 ```text
-PS> kubectl version --client
-Client Version: v1.34.13
+PS> kubectl get pods
+No resources found in k8s-study-… namespace.
 ```
 
-**확인** — Client Version 이 나오면 됩니다(버전 숫자는 달라도 됨). 한 번만 하면 새 창 · 새 탭에서도 그대로 쓰입니다.
+**확인** — 마지막 줄에 No resources found 가 나오면 됩니다(칸 이름은 사람마다 다름). 새 창 · 새 탭에서도 그대로 쓰입니다.
 
-**막히면** — Windows: '이미 있습니다' 는 이미 푼 것 · 새 탭에서 kubectl 을 못 찾으면 Windows Terminal 을 닫았다 다시 엽니다. Mac: 첫 줄 끝에는 # 설명을 붙이지 않습니다 · unzip 이 파일을 못 찾으면 이미 풀린 것: mv ~/Downloads/k8s-study ~.
+**막히면** — Windows: 탐색기로 풀지 않고 첫 줄 명령으로 풉니다 · 새 탭에서 kubectl 을 못 찾으면 Windows Terminal 을 닫았다 다시 엽니다. Mac: 첫 줄 끝에는 # 설명을 붙이지 않습니다 · unzip 이 파일을 못 찾으면 이미 풀린 것: mv ~/Downloads/k8s-study ~.
 
 ### ② 실습 폴더로 들어가기
 

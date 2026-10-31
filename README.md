@@ -33,7 +33,7 @@ kubectl apply -f solutions/02-deployment -f solutions/03-service
 
 ## 실습 앱
 
-[demo-app](demo-app) 은 실습에 쓰는 아주 작은 Spring Boot 앱의 소스입니다. 진행자가 미리 빌드해서 ECR(AWS 의 이미지 저장소)에 올려 두었으니 직접 빌드할 필요는 없습니다. 화면은 이렇게 생겼습니다.
+[demo-app](demo-app) 은 실습에 쓰는 아주 작은 Spring Boot 앱의 소스입니다. 미리 빌드해서 ECR(AWS 의 이미지 저장소)에 올려 두었으니 직접 빌드할 필요는 없습니다. 화면은 이렇게 생겼습니다.
 
 ```text
 pod      : demo-6d8f9b7c5-x2k4p       ← 응답한 파드 이름
