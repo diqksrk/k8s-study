@@ -122,7 +122,7 @@ PS> kubectl apply -f labs/06-ingress/ingress.yaml
 ingress.networking.k8s.io/demo created
 PS> kubectl get ingress demo
 NAME   CLASS     HOSTS                        ADDRESS                                     PORTS   AGE
-demo   traefik   user1.3-38-247-68.sslip.io   a1b2c3….elb.ap-northeast-2.amazonaws.com    80      9s
+demo   traefik   user1.43-201-184-138.sslip.io   a93492….elb.ap-northeast-2.amazonaws.com    80      9s
 ```
 
 **확인** — HOSTS 가 내 주소, ADDRESS 가 입구(NLB)입니다. HOSTS 값은 사람마다 다르고, 다음 단계부터 이 값을 복사해 씁니다.
@@ -143,9 +143,9 @@ for i in {1..4}; do curl -s http://<HOSTS 값>/pod; done         # Mac
 나와야 할 화면 (예시)
 
 ```text
-PS> curl.exe -s http://user1.3-38-247-68.sslip.io/
+PS> curl.exe -s http://user1.43-201-184-138.sslip.io/
 pod      : demo-765c687f8d-9tclb        version  : 1.0   …  (화면에서는 일곱 줄)
-PS> 1..4 | ForEach-Object { curl.exe -s http://user1.3-38-247-68.sslip.io/pod }
+PS> 1..4 | ForEach-Object { curl.exe -s http://user1.43-201-184-138.sslip.io/pod }
 demo-765c687f8d-9tclb
 demo-765c687f8d-gxf5v
 demo-765c687f8d-j92cp
@@ -172,10 +172,10 @@ curl.exe -s http://<HOSTS 값>/                     # 원래 주소는 그대로
 ```text
 PS> kubectl get ingress demo
 NAME   CLASS     HOSTS                                                   ADDRESS     PORTS   AGE
-demo   traefik   user1.3-38-247-68.sslip.io,v2.user1.3-38-247-68.sslip.io   a1b2c3…     80      3m
-PS> curl.exe -s http://v2.user1.3-38-247-68.sslip.io/
+demo   traefik   user1.43-201-184-138.sslip.io,v2.user1.43-201-184-138.sslip.io   a93492…     80      3m
+PS> curl.exe -s http://v2.user1.43-201-184-138.sslip.io/
 pod      : demo-v2-6c9f7d8b4-k2m4p        version  : 2.0  (화면에서는 두 줄)
-PS> curl.exe -s http://user1.3-38-247-68.sslip.io/
+PS> curl.exe -s http://user1.43-201-184-138.sslip.io/
 pod      : demo-765c687f8d-j92cp          version  : 1.0
 ```
 
@@ -197,18 +197,18 @@ curl.exe -s http://<HOSTS 값>/pod                  # 열어 둔 길은 그대�
 나와야 할 화면 (예시)
 
 ```text
-PS> curl.exe -sI http://user1.3-38-247-68.sslip.io/actuator/env
+PS> curl.exe -sI http://user1.43-201-184-138.sslip.io/actuator/env
 HTTP/1.1 200 OK
 PS> kubectl apply -f labs/06-ingress/ingress-safe.yaml
-PS> curl.exe -sI http://user1.3-38-247-68.sslip.io/actuator/env
+PS> curl.exe -sI http://user1.43-201-184-138.sslip.io/actuator/env
 HTTP/1.1 404 Not Found
-PS> curl.exe -s http://user1.3-38-247-68.sslip.io/pod
+PS> curl.exe -s http://user1.43-201-184-138.sslip.io/pod
 demo-765c687f8d-gxf5v
 ```
 
 **확인** — 닫기 전 200, 닫은 뒤 404 면 됩니다. 브라우저의 env 화면에는 파드의 환경변수 · 내부 주소가 다 보였습니다.
 
-**막히면** — v2. 주소도 이 파일에는 없어서 같이 닫혔습니다(정상) · 200 이 그대로면 apply 한 파일 이름을 봅니다.
+**막히면** — v2. 주소도 이 파일에는 없어서 같이 닫혔습니다(정상) · 200 이 그대로면 3초 뒤 다시, 그래도면 파일 이름을 봅니다.
 
 ### ⑤ 고장 5 — 열리지 않는 주소
 
@@ -223,12 +223,12 @@ kubectl get ingress                               # 두 줄을 칸마다 비교�
 나와야 할 화면 (예시)
 
 ```text
-PS> curl.exe -sI http://broken.user1.3-38-247-68.sslip.io/
+PS> curl.exe -sI http://broken.user1.43-201-184-138.sslip.io/
 HTTP/1.1 404 Not Found
 PS> kubectl get ingress
 NAME          CLASS     HOSTS                               ADDRESS     PORTS   AGE
-demo          traefik   user1.3-38-247-68.sslip.io          a1b2c3…     80      20m
-demo-broken   <none>    broken.user1.3-38-247-68.sslip.io               80      9s
+demo          traefik   user1.43-201-184-138.sslip.io          a93492…     80      20m
+demo-broken   <none>    broken.user1.43-201-184-138.sslip.io               80      9s
 ```
 
 **확인** — 원인을 찾아 ingress-broken.yaml 을 고치고 다시 apply 합니다. 같은 curl 이 200 OK 면 성공.
@@ -249,7 +249,7 @@ kubectl get ingress,deploy
 ```text
 PS> kubectl get ingress,deploy
 NAME                             CLASS     HOSTS                        ADDRESS     PORTS   AGE
-ingress.networking.k8s.io/demo   traefik   user1.3-38-247-68.sslip.io   a1b2c3…     80      12m
+ingress.networking.k8s.io/demo   traefik   user1.43-201-184-138.sslip.io   a93492…     80      12m
 NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
 deployment.apps/demo   3/3     3            3           20m
 ```
@@ -296,7 +296,7 @@ cat: can't open '/data/note.txt': No such file or directory
 kubectl apply -f labs/07-volume/pvc.yaml
 kubectl get pvc                                   # Pending — 쓸 파드가 생길 때까지 기다리는 중
 kubectl apply -f labs/07-volume/note-pvc.yaml
-kubectl get pvc -w                                # Bound 가 되면 Ctrl+C (디스크를 만드는 데 10~30초)
+kubectl get pvc -w                                # Bound 가 되면 Ctrl+C (디스크를 만드는 데 5~30초)
 kubectl rollout status deploy/note
 kubectl exec deploy/note -- sh -c 'date >> /data/note.txt; cat /data/note.txt'
 ```
@@ -453,7 +453,7 @@ QoS Class:                   Burstable
 demo-5c8d7f9b6-q8w2e    3m           171Mi       ← kubectl top (CPU · 메모리)
 ```
 
-**확인** — 적어 둔 값(100m · 256Mi)과 실제 쓰는 값(몇 m · 120~200Mi)이 다릅니다. top 이 안 나오면 30초 뒤.
+**확인** — 적어 둔 값(100m · 256Mi)과 쓰는 값(몇 m · 120~200Mi)이 다릅니다. 막 뜬 직후엔 CPU 가 높음 · top 은 30초 뒤.
 
 ### ② 2 코어를 예약하면
 
@@ -627,7 +627,7 @@ version  : 1.0
 
 **확인** — 탭 ① 에 version : 1.0 이 계속 찍히면 됩니다. 탭 ① 은 실습 9 가 끝날 때까지 켜 둡니다.
 
-**막히면** — 마지막 줄은 탭 ① 에서 칩니다 · 따옴표는 작은따옴표(') 그대로 · 끌 때는 Ctrl+C.
+**막히면** — 마지막 줄은 탭 ① 에서 · 따옴표는 작은따옴표(') 그대로 · 처음 몇 초 FAIL 은 앱이 뜨는 중 · 끌 때는 Ctrl+C.
 
 ### ② 2.0 으로 바꾸기
 
@@ -709,7 +709,7 @@ FAIL
 
 **확인** — 먼저 rollout undo 로 살리고(탭 ① 이 다시 version), 그다음 원인을 찾습니다. 원인을 말할 수 있으면 성공.
 
-**막히면** — 원인은 새 판 파드의 kubectl logs 에서 'Tomcat started on port' 줄 · 되돌린 뒤엔 rollout history.
+**막히면** — 원인은 새 판 파드의 kubectl logs 의 'Tomcat started on port' 줄 · 되돌린 뒤엔 rollout history --revision=`<번호>`.
 
 ### 정리 — 실습 10 으로 넘어가기 전에
 
