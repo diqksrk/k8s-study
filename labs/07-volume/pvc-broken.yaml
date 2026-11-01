@@ -1,0 +1,41 @@
+# 실습 7. 고장 — 이 파드는 뜨지 않습니다. 원인을 찾아 고쳐 보세요
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: broken-data
+spec:
+  storageClassName: gp3-fast
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken-note
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: broken-note
+  template:
+    metadata:
+      labels:
+        app: broken-note
+    spec:
+      terminationGracePeriodSeconds: 1
+      securityContext:
+        fsGroup: 101
+      containers:
+        - name: note
+          image: curlimages/curl:8.11.1
+          command: ["sleep", "36000"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: broken-data

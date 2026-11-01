@@ -1,0 +1,22 @@
+# 실습 8. demo 의 CPU 사용률이 목표를 넘으면 파드를 늘리고, 내려가면 줄인다
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: demo
+spec:
+  scaleTargetRef:            # 개수를 맡을 대상
+    apiVersion: apps/v1
+    kind: Deployment
+    name: demo
+  minReplicas: 1
+  maxReplicas: 5             # 아무리 바빠도 5개까지 (우리 칸 쿼터 · 노드를 지키는 선)
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: TODO   # TODO: 파드 평균 CPU 가 requests(100m) 의 몇 % 를 넘으면 늘릴지 — 50 으로
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 30   # 실습이라 30초만 보고 줄인다 (기본은 300초 = 5분)

@@ -1,0 +1,31 @@
+# 실습 6. 같은 입구 뒤에 세울 두 번째 앱 — 2.0 이미지 하나와 그 앞의 서비스
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-v2
+  template:
+    metadata:
+      labels:
+        app: demo-v2
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:2.0
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-v2
+spec:
+  selector:
+    app: demo-v2
+  ports:
+    - port: 80
+      targetPort: 8080

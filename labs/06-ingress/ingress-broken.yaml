@@ -1,0 +1,17 @@
+# 실습 6. 고장 — 이 입구 규칙으로는 접속이 안 됩니다. 원인을 찾아 고쳐 보세요
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-broken
+spec:
+  rules:
+    - host: broken.__HOST__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: demo
+                port:
+                  number: 80

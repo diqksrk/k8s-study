@@ -1,0 +1,33 @@
+# 실습 9. 판 바꾸기 — 이 파일의 1.0 두 군데를 2.0 으로 고쳐 apply 하면 배포가 시작된다
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  annotations:
+    kubernetes.io/change-cause: "image 1.0"   # rollout history 에 남는 한 줄 (ASCII 로)
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # 3개보다 1개 더 띄워도 된다 (최대 4개)
+      maxUnavailable: 0    # 3개 밑으로는 내려가지 않는다
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 384Mi

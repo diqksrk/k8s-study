@@ -1,0 +1,12 @@
+# 실습 7. 디스크 청구서 — "1Gi 짜리 디스크 하나 주세요". 실제 디스크(EBS)는 쿠버네티스가 만든다
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: note-data
+spec:
+  storageClassName: gp3        # 어떤 종류의 디스크로 (관리자가 만들어 둔 StorageClass 이름)
+  accessModes:
+    - ReadWriteOnce            # 노드 한 대에만 붙는다 (EBS 는 이것만 된다)
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,36 @@
+# 실습 9. 고장 — 배포는 끝났다는데 접속이 안 됩니다. 먼저 되돌리고, 원인을 찾아보세요
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  annotations:
+    kubernetes.io/change-cause: "image 2.0 + new env"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:2.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SERVER_PORT
+              value: "9090"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 384Mi

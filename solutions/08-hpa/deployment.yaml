@@ -1,0 +1,26 @@
+# 실습 8. demo 에 '예약할 몫(requests)' 과 '넘지 못할 선(limits)' 을 적는다
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+spec:
+  # replicas 는 적지 않는다 — 개수는 HPA 가 정한다 (적어 두면 apply 할 때마다 HPA 와 싸운다)
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m          # 0.1 코어. 스케줄러가 노드 자리를 셀 때 · HPA 가 % 를 셀 때 쓰는 값
+              memory: 256Mi
+            limits:
+              memory: 384Mi      # 이걸 넘으면 컨테이너가 죽는다 (OOMKilled)

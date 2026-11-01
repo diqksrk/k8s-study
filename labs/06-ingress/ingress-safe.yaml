@@ -1,0 +1,25 @@
+# 실습 6. 밖으로 열 길만 적는다 — 화면(/)과 /pod 만 열고, /actuator 같은 관리용 길은 닫는다
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: __HOST__
+      http:
+        paths:
+          - path: /
+            pathType: Exact       # 정확히 / 하나만 (/actuator 는 여기 걸리지 않는다)
+            backend:
+              service:
+                name: demo
+                port:
+                  number: 80
+          - path: /pod
+            pathType: Prefix
+            backend:
+              service:
+                name: demo
+                port:
+                  number: 80

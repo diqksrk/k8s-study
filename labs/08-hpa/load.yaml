@@ -1,0 +1,26 @@
+# 실습 8. 부하 만들기 — 서비스 demo 를 쉬지 않고 부르는 파드 하나
+# curl 하나가 연결을 이어 쓰며 200번씩 부른다 ([1-200]). CPU 는 0.3 코어로 묶어서 노드를 혼자 다 쓰지 않게 한다
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: load
+  template:
+    metadata:
+      labels:
+        app: load
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+        - name: load
+          image: curlimages/curl:8.11.1
+          command: ["sh", "-c", "while true; do curl -s -o /dev/null 'http://demo/?[1-200]'; done"]
+          resources:
+            requests:
+              cpu: 50m
+            limits:
+              cpu: 300m

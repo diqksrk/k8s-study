@@ -1,0 +1,31 @@
+# 실습 7 완성본 (TODO 채움). 같은 note 를 이번에는 디스크(PVC)에 메모하게 바꾼다
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: note
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate                       # 디스크(RWO)를 쓰면 옛 파드를 먼저 내리고 새 파드를 띄운다
+  selector:
+    matchLabels:
+      app: note
+  template:
+    metadata:
+      labels:
+        app: note
+    spec:
+      terminationGracePeriodSeconds: 1
+      securityContext:
+        fsGroup: 101                     # curl 이미지의 사용자(curl_user) 그룹. 이게 없으면 디스크에 못 쓴다
+      containers:
+        - name: note
+          image: curlimages/curl:8.11.1
+          command: ["sleep", "36000"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: note-data

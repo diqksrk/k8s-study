@@ -1,0 +1,26 @@
+# 실습 7. 메모를 남기는 파드 하나 — /data 는 파드와 같이 사는 임시 폴더(emptyDir)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: note
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: note
+  template:
+    metadata:
+      labels:
+        app: note
+    spec:
+      terminationGracePeriodSeconds: 1   # 지울 때 30초 기다리지 않게
+      containers:
+        - name: note
+          image: curlimages/curl:8.11.1  # 1회차 curl 파드와 같은 이미지 (sh 가 들어 있다)
+          command: ["sleep", "36000"]
+          volumeMounts:
+            - name: data
+              mountPath: /data           # 컨테이너 안에서 보이는 자리
+      volumes:
+        - name: data
+          emptyDir: {}                   # 파드가 생길 때 빈 폴더로 만들고, 파드가 지워지면 같이 지운다

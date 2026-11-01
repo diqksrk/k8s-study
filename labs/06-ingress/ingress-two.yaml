@@ -1,0 +1,28 @@
+# 실습 6. 입구 하나, 이름 둘 — 앞에 v2. 가 붙은 주소로 오면 demo-v2 로 보낸다
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: __HOST__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: demo
+                port:
+                  number: 80
+    - host: v2.__HOST__           # 같은 입구 · 다른 이름
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: demo-v2
+                port:
+                  number: 80

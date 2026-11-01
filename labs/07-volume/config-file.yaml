@@ -1,0 +1,25 @@
+# 실습 7. 컨피그맵을 파일로 넣기 — 키 하나가 /config 아래 파일 하나가 된다
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: note-config
+data:
+  greeting: hello from file v1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cfgfile
+spec:
+  terminationGracePeriodSeconds: 1
+  containers:
+    - name: cfgfile
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "36000"]
+      volumeMounts:
+        - name: config
+          mountPath: /config             # /config/greeting 파일이 생긴다
+  volumes:
+    - name: config
+      configMap:
+        name: note-config

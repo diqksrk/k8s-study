@@ -1,0 +1,23 @@
+# 실습 8. 고장 — 이 파드는 떴다가 계속 다시 시작합니다. 원인을 찾아 고쳐 보세요
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oom
+  template:
+    metadata:
+      labels:
+        app: oom
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          resources:
+            requests:
+              memory: 96Mi
+            limits:
+              memory: 96Mi

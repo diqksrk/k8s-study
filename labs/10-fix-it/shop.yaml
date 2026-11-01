@@ -1,0 +1,86 @@
+# 실습 10. 종합 수리 — 밖에서 shop 이 열리지 않습니다. 두 군데가 망가져 있습니다
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shop-config
+data:
+  APP_GREETING: welcome to shop
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shop-data
+spec:
+  storageClassName: gp3
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: shop
+  template:
+    metadata:
+      labels:
+        app: shop
+    spec:
+      containers:
+        - name: shop
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:2.0
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: shop-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 96Mi
+            limits:
+              memory: 96Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: shop-dat
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop
+spec:
+  selector:
+    app: shop
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shop
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: shop.__HOST__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: shop
+                port:
+                  number: 80
