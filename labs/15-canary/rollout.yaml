@@ -1,0 +1,56 @@
+# 실습 15 ②. 조금씩 바꾸기 — 디플로이먼트 대신 Argo Rollouts 의 Rollout. 파드 4개 중 1개만 먼저 새 판으로
+# 실습 14 의 demo(Argo CD 가 맡음)와 섞이지 않게 이름 · 라벨을 canary 로 따로 쓴다
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: canary
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: canary
+  strategy:
+    canary:
+      steps:
+        - setWeight: 25                # 4개 중 1개를 새 판으로 (트래픽 나누는 장치 없이 파드 수로)
+        - pause: {}                    # 사람이 promote 할 때까지 기다린다
+        - setWeight: 50                # 4개 중 2개
+        - pause: {duration: 30s}       # 30초 보고 저절로 다음으로 → 끝나면 100%
+  template:
+    metadata:
+      labels:
+        app: canary
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: canary
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 2
+            failureThreshold: 1
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 384Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary
+spec:
+  selector:
+    app: canary                        # 옛 판 · 새 판 파드를 모두 명단에 넣는다 → 파드 수만큼 나눠 받는다
+  ports:
+    - port: 80
+      targetPort: 8080

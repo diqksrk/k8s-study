@@ -1,0 +1,18 @@
+# 실습 12 ④. 고장 12 — 들어가지 못하는 노드. 도구 노드(role=tools)로 가라고 했지만 그 노드에는 테인트가 걸려 있다
+# 고치는 법: 아래 주석 처리된 tolerations 네 줄의 # 를 풀고(들여쓰기는 nodeSelector 와 같게) 지운 뒤 다시 apply 한다
+apiVersion: v1
+kind: Pod
+metadata:
+  name: visitor
+spec:
+  terminationGracePeriodSeconds: 1
+  nodeSelector:
+    role: tools                      # 도구 노드로만
+  # tolerations:                     # 이 테인트는 참아 준다 (= 들어가도 된다)
+  #   - key: dedicated
+  #     value: tools
+  #     effect: NoSchedule
+  containers:
+    - name: visitor
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "36000"]

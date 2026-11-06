@@ -1,0 +1,40 @@
+# 실습 11 ① 완성본 (TODO 채움)
+# 2회차 실습 9 와 같은 demo 1.0 × 3 (하나씩 바꾸는 규칙 그대로) 에 '준비됐나' 묻는 장치만 더했다
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  annotations:
+    kubernetes.io/change-cause: "image 1.0 + readiness"   # rollout history 에 남는 한 줄 (ASCII 로)
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          ports:
+            - containerPort: 8080
+          readinessProbe:              # 이 주소가 200 이면 '준비됨' → 서비스 명단에 들어간다
+            httpGet:
+              path: /actuator/health/readiness   # Spring Boot 가 쿠버네티스 안에서 저절로 켜 주는 주소
+              port: 8080
+            periodSeconds: 2           # 2초마다 묻는다
+            failureThreshold: 1        # 한 번만 실패해도 명단에서 뺀다
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 384Mi

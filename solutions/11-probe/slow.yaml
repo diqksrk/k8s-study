@@ -1,0 +1,45 @@
+# 실습 11 ⑤ 완성본 (TODO 채움)
+# 고장 10 과 같은 앱 · 같은 CPU 한도 · 같은 liveness. startupProbe 가 성공할 때까지 liveness 는 묻지 않는다
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: slow
+  template:
+    metadata:
+      labels:
+        app: slow
+    spec:
+      containers:
+        - name: slow
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:2.0
+          ports:
+            - containerPort: 8080
+          startupProbe:                # 다 떴나 — 성공하면 그때부터 liveness · readiness 가 묻기 시작
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 30       # 5초 × 30 = 150초까지 기다려 준다
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 2
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 150m
+              memory: 384Mi

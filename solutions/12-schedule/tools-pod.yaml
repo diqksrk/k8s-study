@@ -1,0 +1,17 @@
+# 실습 12 ④ 완성본 (tolerations 주석을 풂)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: visitor
+spec:
+  terminationGracePeriodSeconds: 1
+  nodeSelector:
+    role: tools
+  tolerations:
+    - key: dedicated
+      value: tools
+      effect: NoSchedule
+  containers:
+    - name: visitor
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "36000"]

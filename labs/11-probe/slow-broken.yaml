@@ -1,0 +1,40 @@
+# 실습 11 ④. 고장 10 — 다시 시작만 반복하는 앱. 앱은 멀쩡하다, 느릴 뿐이다
+# CPU 한도를 150m 으로 묶어 기동이 오래 걸리게 했다. 살아 있나(liveness)를 너무 일찍 · 너무 짧게 물어서, 다 뜨기 전에 죽인다
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slow-broken
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: slow-broken
+  template:
+    metadata:
+      labels:
+        app: slow-broken
+    spec:
+      containers:
+        - name: slow-broken
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:2.0
+          ports:
+            - containerPort: 8080
+          livenessProbe:               # 이 주소가 연속으로 실패하면 컨테이너를 다시 시작한다
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 5     # 뜨고 5초 뒤부터
+            periodSeconds: 5           # 5초마다
+            failureThreshold: 2        # 두 번 연속 실패면 다시 시작 → 뜨고 15초 안팎에 죽는다
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 150m                # 기동을 느리게 하는 줄 (현업의 '바쁜 노드 · 무거운 앱' 흉내)
+              memory: 384Mi

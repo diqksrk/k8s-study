@@ -1,0 +1,32 @@
+# 실습 12 ②. AZ 마다 하나씩 — topologySpreadConstraints 의 TODO 한 군데를 채워 apply 한다
+# demo 와 따로 새 이름(spread)으로 띄운다. demo 에 걸면 옛 파드까지 셈에 들어가 교체가 멈출 수 있다
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spread
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: spread
+  template:
+    metadata:
+      labels:
+        app: spread
+    spec:
+      topologySpreadConstraints:
+        - topologyKey: TODO            # TODO: 무엇으로 나눌까 — AZ 라벨 topology.kubernetes.io/zone
+          maxSkew: 1                   # AZ 사이의 파드 수 차이를 1 까지만
+          whenUnsatisfiable: DoNotSchedule   # 못 맞추면 띄우지 않고 기다린다 (ScheduleAnyway 면 '되도록')
+          labelSelector:
+            matchLabels:
+              app: spread              # 어느 파드를 셀까 — 이 디플로이먼트의 파드
+      containers:
+        - name: spread
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 384Mi

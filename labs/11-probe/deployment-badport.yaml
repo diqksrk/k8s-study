@@ -1,0 +1,43 @@
+# 실습 11 ②. 고장 9 — 2회차 고장 8 (SERVER_PORT 9090) 을 다시. 이번에는 readinessProbe 가 붙어 있다
+# 앱은 9090 에서 뜨는데 쿠버네티스는 8080 으로 '준비됐나' 묻는다 → 새 파드가 준비됨이 되지 않는다 → 배포가 거기서 멈춘다
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  annotations:
+    kubernetes.io/change-cause: "image 2.0 + new env + readiness"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:2.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SERVER_PORT
+              value: "9090"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 2
+            failureThreshold: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 384Mi

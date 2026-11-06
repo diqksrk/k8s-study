@@ -1,0 +1,18 @@
+# 실습 14. git 저장소의 app/ingress.yaml 과 같은 내용 — 참고용 사본 (2회차 실습 6 의 입구 규칙 demo)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: __HOST__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: demo
+                port:
+                  number: 80

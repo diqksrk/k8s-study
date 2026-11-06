@@ -1,0 +1,45 @@
+# 실습 11 ③. 끊김 없이 바꾸기 — 준비 확인(readiness) + 꺼지기 전에 기다리기(preStop)
+# 먼저 이대로 apply 하고, 그다음 이 파일의 1.0 두 군데를 2.0 으로 고쳐 다시 apply 한다 (탭 ① 의 FAIL 을 센다)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  annotations:
+    kubernetes.io/change-cause: "image 1.0 + readiness + preStop"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      terminationGracePeriodSeconds: 30   # 끄라는 신호(SIGTERM) 뒤 기다려 주는 최대 시간 (기본값과 같음 · 보이게 적음)
+      containers:
+        - name: demo
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 2
+            failureThreshold: 1
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5             # 꺼지기 전에 5초 — 명단에서 빠지는 소식이 퍼질 시간 (셸 없이 쓰는 sleep · 1.34 정식)
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 384Mi

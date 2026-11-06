@@ -1,0 +1,49 @@
+# 실습 15 ⑤. 고장 14 — 멈춘 카나리. 2회차 고장 8 과 같은 새 판(2.0 + SERVER_PORT 9090)을 카나리로 내보낸다
+# 새 판 파드 하나가 준비되지 않아 25% 단계에서 멈춘다. 60초 뒤 Degraded → abort 로 옛 판만 남긴다
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: canary
+spec:
+  replicas: 4
+  progressDeadlineSeconds: 60          # 새 판이 60초 안에 준비되지 않으면 '멈춤(Degraded)' 으로 표시 (기본 600 · 고장을 빨리 보려고 줄임)
+  selector:
+    matchLabels:
+      app: canary
+  strategy:
+    canary:
+      steps:
+        - setWeight: 25                # 4개 중 1개를 새 판으로 (트래픽 나누는 장치 없이 파드 수로)
+        - pause: {}                    # 사람이 promote 할 때까지 기다린다
+        - setWeight: 50                # 4개 중 2개
+        - pause: {duration: 30s}       # 30초 보고 저절로 다음으로 → 끝나면 100%
+  template:
+    metadata:
+      labels:
+        app: canary
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: canary
+          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:2.0
+          env:
+            - name: SERVER_PORT
+              value: "9090"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 2
+            failureThreshold: 1
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 384Mi

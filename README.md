@@ -1,6 +1,6 @@
 # 쿠버네티스 스터디 실습
 
-『쿠버네티스 인 액션』 스터디 실습 저장소입니다. 1회차(아키텍처 · Pod · Deployment · Service · ConfigMap · Secret)는 실습 1 ~ 5, 2회차(Ingress · Volume · PV/PVC · HPA · 리소스 · Rolling Update)는 실습 6 ~ 10 입니다.
+『쿠버네티스 인 액션』 스터디 실습 저장소입니다. 1회차(아키텍처 · Pod · Deployment · Service · ConfigMap · Secret)는 실습 1 ~ 5, 2회차(Ingress · Volume · PV/PVC · HPA · 리소스 · Rolling Update)는 실습 6 ~ 10, 3회차(Probe · 스케줄링 · 로그 · 모니터링 · Argo CD · Argo Rollouts)는 실습 11 ~ 16 입니다.
 
 ## 시작 전에
 
@@ -11,7 +11,7 @@
 
 ## 실습 순서
 
-1회차는 **[HANDS_ON.md](HANDS_ON.md)**, 2회차는 **[HANDS_ON_2.md](HANDS_ON_2.md)** 를 위에서부터 따라 하면 됩니다. 단계마다 칠 명령과 나와야 할 화면이 있습니다. 1회차 폴더의 README 에도 같은 실습이 있습니다(2회차 폴더의 README 는 파일 안내만). YAML 은 `# TODO` 가 붙은 줄만 고칩니다.
+1회차는 **[HANDS_ON.md](HANDS_ON.md)**, 2회차는 **[HANDS_ON_2.md](HANDS_ON_2.md)**, 3회차는 **[HANDS_ON_3.md](HANDS_ON_3.md)** 를 위에서부터 따라 하면 됩니다. 단계마다 칠 명령과 나와야 할 화면이 있습니다. 1회차 폴더의 README 에도 같은 실습이 있습니다(2 · 3회차 폴더의 README 는 파일 안내만). YAML 은 `# TODO` 가 붙은 줄만 고칩니다.
 
 1. [labs/01-pod](labs/01-pod) — 파드 띄우고 들여다보기, Events 읽기, 고장 1
 2. [labs/02-deployment](labs/02-deployment) — 지워도 다시 생기는 파드, 레이블, scale, 잘못된 버전
@@ -23,8 +23,14 @@
 8. [labs/08-hpa](labs/08-hpa) — requests · limits, 2 코어 예약, 고장 7, 부하에 늘어나는 파드(HPA)
 9. [labs/09-rollout](labs/09-rollout) — 1.0 → 2.0 롤링 업데이트, 되돌리기, 고장 8
 10. [labs/10-fix-it](labs/10-fix-it) — 종합 수리
+11. [labs/11-probe](labs/11-probe) — readiness · liveness · startup 프로브, 끊김 없는 교체(preStop), 고장 9 · 10
+12. [labs/12-schedule](labs/12-schedule) — 노드 라벨, AZ 마다 고루 퍼뜨리기, 고장 11 · 12(라벨 · 테인트)
+13. [labs/13-observe](labs/13-observe) — 로그 · 죽기 전 로그 · 이벤트, Grafana · Prometheus
+14. [labs/14-gitops](labs/14-gitops) — Gitea 에 커밋해 Argo CD 로 배포, git 으로 되돌리기, 고장 13
+15. [labs/15-canary](labs/15-canary) — Argo Rollouts 카나리 25% → promote, 고장 14
+16. [labs/16-fix-it](labs/16-fix-it) — 종합 수리
 
-2회차 실습 YAML 의 `__HOST__` 는 사람마다 받는 압축에서 내 주소로 채워져 있습니다.
+2 · 3회차 실습 YAML 의 `__HOST__` 는 사람마다 받는 압축에서 내 주소로 채워져 있습니다. 3회차 압축에는 내 Gitea · Argo CD 계정 파일 `accounts.txt` 가 더해집니다(남에게 보내지 않습니다).
 
 ## 뒤처졌을 때
 
