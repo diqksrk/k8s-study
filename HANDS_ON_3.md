@@ -151,7 +151,7 @@ PS> kubectl describe pod -l app=demo
 
 **확인** — 새 파드가 0/1 로 잠깐 있다가 1/1 이 되고, 그다음에 옛 파드가 내려가면 됩니다. 탭 ① 은 1.0 그대로입니다.
 
-**막히면** — 계속 0/1 이면 TODO 를 안 고친 것 — describe 맨 아래 Readiness probe failed · 탭 ① 의 FAIL 한두 줄은 괜찮습니다.
+**막히면** — 계속 0/1 이면 TODO 를 안 고친 것(describe 맨 아래) · 꺼지는 옛 파드의 Error 와 FAIL 한두 줄은 괜찮습니다.
 
 ### ② 고장 9 — 이번엔 멈춘다
 
@@ -222,12 +222,12 @@ kubectl logs -l app=slow-broken --previous          # 죽기 직전 로그
 
 ```text
 PS> kubectl get pods -l app=slow-broken -w
-slow-broken-6d9f7c8b5-x2kq7   0/1     Running            2 (14s ago)   80s
-slow-broken-6d9f7c8b5-x2kq7   0/1     CrashLoopBackOff   3 (1s ago)    2m
+slow-broken-57f7f5f659-j6bs2   0/1     Running            2 (1s ago)    54s
+slow-broken-57f7f5f659-j6bs2   0/1     Running            4 (1s ago)    104s
   Warning  Unhealthy  … Liveness probe failed: Get "http://…:8080/actuator/health/liveness": … connection refused
   Normal   Killing    … Container slow-broken failed liveness probe, will be restarted
 PS> kubectl logs -l app=slow-broken --previous
-… Starting DemoApplication …      ← 'Started' 줄 없이 끊김
+… DemoApplication : Starting DemoApplication using Java 21 …   ← 'Started' 줄 없이 끊김
 ```
 
 **확인** — 앱이 망가진 게 아니라, 다 뜨기 전에 '살아 있나' 를 물어 죽인 것이라고 말할 수 있으면 성공입니다. 지우지 않고 둡니다.
@@ -434,7 +434,7 @@ slow-broken-9c7979958-bjnmz   0/1     CrashLoopBackOff   9 (73s ago)   14m
 
 **확인** — --prefix 로 어느 파드의 줄인지 보이고, --previous 는 지금이 아니라 직전에 죽은 컨테이너의 로그라는 것을 알면 됩니다.
 
-**막히면** — --previous 가 비어 있으면 앱이 첫 줄을 찍기도 전에 죽은 것 · Found 3 pods, using … 는 하나만 골랐다는 뜻.
+**막히면** — --previous 에 Started 줄이 없으면 그게 답(다 뜨기 전에 죽음) · Found 3 pods, using … 는 하나만 골랐다는 뜻.
 
 ### ② 이벤트 — 칸의 알림판
 
@@ -654,7 +654,7 @@ version  : 2.0  …  version  : 1.0
 Argo CD 에서 자동 동기화와 Self Heal 을 켠 뒤, kubectl 로 demo 를 5개로 늘려 봅니다.
 
 ```powershell
-# Argo CD → DETAILS → SYNC POLICY → ENABLE AUTO-SYNC → OK → SELF HEAL 켜기 → OK
+# Argo CD → DETAILS → SYNC POLICY → ENABLE AUTO-SYNC 체크 → OK → SELF HEAL 체크 → OK
 kubectl scale deploy demo --replicas=5
 kubectl get deploy demo -w                          # 5 → 다시 2 · Ctrl+C
 ```
@@ -664,7 +664,7 @@ kubectl get deploy demo -w                          # 5 → 다시 2 · Ctrl+C
 ```text
 PS> kubectl get deploy demo -w
 demo   2/5     2            2           20m
-demo   2/2     2            2           20m      ← 2초 만에 되돌아감 (로컬 실측)
+demo   2/2     2            2           20m      ← 2초 만에 되돌아감 (EKS 실측)
 ```
 
 **확인** — 누가 되돌렸는지(Argo CD 의 Self Heal)와, 그럼 5개가 필요하면 어디를 고쳐야 하는지(git) 말할 수 있으면 성공.
@@ -861,10 +861,10 @@ kubectl apply -f labs/16-fix-it/shop.yaml
 
 `shop.yaml` 한 파일에 컨피그맵 `shop-config` · 디플로이먼트 `shop` · 서비스 `shop` · 인그레스 `shop` 네 개가 `---` 로 나뉘어 들어 있습니다. apply 한 번에 다 만들어집니다.
 
-**목표** — 브라우저에서 `http://shop.<HOSTS 값>/` 을 열었을 때 `greeting : welcome to shop` 이 나오면 성공입니다. 주소는 `kubectl get ingress shop` 의 HOSTS 에 있습니다.
+**목표** — 아래 명령이 보여 주는 HOSTS 칸의 주소(`shop.` 으로 시작)를 브라우저 주소창에 그대로 붙여 넣었을 때 `greeting : welcome to shop` 이 나오면 성공입니다.
 
 ```powershell
-curl.exe -s http://shop.<HOSTS 값>/       # Windows · Mac 은 curl
+kubectl get ingress shop                  # HOSTS 칸의 주소를 브라우저 주소창에
 ```
 
 **진단 순서** — 오늘 쓴 순서 그대로입니다. 하나를 고치면 다음 것이 드러납니다.

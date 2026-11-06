@@ -14,6 +14,7 @@ spec:
       labels:
         app: slow-broken
     spec:
+      terminationGracePeriodSeconds: 3   # '끄라' 뒤 3초 안에 안 꺼지면 강제로 (뜨는 중인 Spring 은 끄라를 다 뜰 때까지 미룸)
       containers:
         - name: slow-broken
           image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:2.0
@@ -23,9 +24,9 @@ spec:
             httpGet:
               path: /actuator/health/liveness
               port: 8080
-            initialDelaySeconds: 5     # 뜨고 5초 뒤부터
+            initialDelaySeconds: 15    # 뜨고 15초 뒤부터
             periodSeconds: 5           # 5초마다
-            failureThreshold: 2        # 두 번 연속 실패면 다시 시작 → 뜨고 15초 안팎에 죽는다
+            failureThreshold: 2        # 두 번 연속 실패면 다시 시작 → 15초 · 20초에 실패 → 뜨고 약 23초에 죽는다
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
