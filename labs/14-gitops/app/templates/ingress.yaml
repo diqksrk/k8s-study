@@ -1,4 +1,5 @@
-# 실습 14. git 저장소의 app/ingress.yaml 과 같은 내용 — 참고용 사본 (2회차 실습 6 의 입구 규칙 demo)
+# 실습 14. git 저장소(Gitea)의 app/templates/ingress.yaml 과 같은 내용 — 참고용 사본. 고치는 것은 브라우저의 Gitea 에서
+# 2회차 실습 6 의 입구 규칙 demo. 값을 끼우는 자리는 주소 한 군데
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,7 +7,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: __HOST__
+    - host: {{ .Values.ingress.host }}
       http:
         paths:
           - path: /

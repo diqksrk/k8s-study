@@ -1,0 +1,7 @@
+# 실습 14. git 저장소(Gitea)의 app/values-dev.yaml 과 같은 내용 — 참고용 사본. 고치는 것은 브라우저의 Gitea 에서
+# 이 칸(dev)의 값. 실습 14 에서 고치는 파일은 이것 하나
+image:
+  tag: "1.0"         # 판 — 고칠 때 따옴표는 그대로 ("2.0")
+replicaCount: 2      # 파드 수
+ingress:
+  host: __HOST__     # 내 주소

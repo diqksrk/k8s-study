@@ -7,8 +7,8 @@
 | 0. 준비 | — | 새 압축 풀기, 2회차 끝 모습으로 맞추기, 지켜보기 켜기 |
 | 11. 프로브 · 끊김 없는 교체 | `labs/11-probe` | readiness, 고장 9, FAIL 없이 2.0 으로, 고장 10, startupProbe |
 | 12. 스케줄링 | `labs/12-schedule` | 노드 라벨, AZ 마다 하나씩, 고장 11 · 12 (갈 곳 없는 파드 · 들어갈 수 없는 노드) |
-| 13. 로그 · 모니터링 | `labs/13-observe` | 지금 로그 · 죽기 전 로그, 이벤트, Grafana, Prometheus |
-| 14. GitOps — Argo CD | `labs/14-gitops` | 브라우저로 커밋해 배포, git 으로 되돌리기, 고장 13 |
+| 13. 로그 · 모니터링 | `labs/13-observe` | 지금 로그 · 죽기 전 로그, 이벤트, Grafana, Loki 로그, Prometheus |
+| 14. GitOps — Argo CD | `labs/14-gitops` | 헬름 값 파일을 브라우저로 커밋해 배포, git 으로 되돌리기, 고장 13 |
 | 15. 조금씩 바꾸기 — Argo Rollouts | `labs/15-canary` | 25% 만 먼저, promote, 고장 14 |
 | 16. 종합 수리 | `labs/16-fix-it` | 밖에서 열리지 않는 shop 고치기 (힌트 없음) |
 
@@ -485,7 +485,32 @@ CPU Throttling — slow 가 뜨는 동안 한도(150m)에 눌린 봉우리 · �
 
 **막히면** — 그래프가 비면 namespace 칸 · 시간을 다시 · 안 열리면 회사 망 — 휴대폰 데이터로 같은 주소.
 
-### ④ Prometheus 한 줄
+### ④ Loki — 죽은 컨테이너의 로그까지
+
+Grafana 의 로그 대시보드에서 slow-broken 이 죽을 때마다 남긴 로그를 한 번에 봅니다.
+
+```powershell
+# Grafana → Dashboards → 스터디 · 내 칸 로그
+# namespace 칸 → k8s-study- 뒤에 accounts.txt 의 아이디
+# pod 칸 → slow-broken-… · 오른쪽 위 시간 → Last 1 hour
+# 아래 '이벤트' 칸 → 실습 11 · 12 의 경고도 여기에 남음
+```
+
+나와야 할 화면 (예시)
+
+```text
+브라우저 · 스터디 · 내 칸 로그
+… Starting DemoApplication using Java 21 …   ← 다시 시작할 때마다 한 번
+… No active profile set, falling back to …
+… Starting DemoApplication using Java 21 …   ← 다음 컨테이너
+--previous 는 바로 앞 하나뿐 · 여기는 죽은 컨테이너 전부
+```
+
+**확인** — 'Starting DemoApplication' 이 RESTARTS 보다 하나 많이(처음 것까지) 되풀이되면 됩니다. 로그를 파드 밖(Loki)에 쌓아 두었기 때문입니다.
+
+**막히면** — pod 칸이 비면 시간을 Last 1 hour 로 · 줄이 없으면 namespace 칸 · 막 뜬 줄은 1분쯤 늦게 들어옴.
+
+### ⑤ Prometheus 한 줄
 
 Prometheus 화면에 쿼리를 한 줄씩 넣어 다시 시작 횟수와 CPU 눌림을 숫자로 봅니다.
 
@@ -507,7 +532,7 @@ container_cpu_cfs_throttled_periods_total{…pod="slow-…"}   412   ← 뜬 뒤
 
 **막히면** — Graph 탭으로 바꾸면 선으로 · 결과가 없으면 따옴표가 큰따옴표(")인지.
 
-### ⑤ 부하를 걸면 (먼저 끝났으면)
+### ⑥ 부하를 걸면 (먼저 끝났으면)
 
 2회차 실습 8 의 부하 파드를 다시 띄우고, 1분 뒤 Grafana 를 새로 고칩니다. 보고 나서 지웁니다.
 
@@ -533,6 +558,7 @@ slow · slow-broken 을 지웁니다. demo · curl 만 남깁니다.
 ```powershell
 kubectl delete deploy slow slow-broken
 kubectl get pods
+# Grafana 로그 대시보드 새로 고침 → 지운 slow-broken 의 로그가 그대로
 ```
 
 나와야 할 화면 (예시)
@@ -543,7 +569,7 @@ curl                    1/1     Running   0          13d
 demo-86bffd5566-h6hwr   1/1     Running   0          30m       (demo 셋)
 ```
 
-**확인** — demo 셋과 curl 만 남으면 됩니다.
+**확인** — demo 셋과 curl 만 남고, Grafana 에는 지운 파드의 로그가 남아 있으면 됩니다.
 
 ---
 
@@ -583,7 +609,7 @@ Argo CD 에서 내 Application 을 열어 SYNC → SYNCHRONIZE 를 누르고 kub
 
 ```powershell
 # Argo CD → 내 Application 카드 → 위의 SYNC → 오른쪽 창의 SYNCHRONIZE
-kubectl get deploy,svc,ingress demo                 # git 의 세 파일 그대로
+kubectl get deploy,svc,ingress demo                 # git 의 차트가 만든 그대로
 ```
 
 나와야 할 화면 (예시)
@@ -593,7 +619,7 @@ Argo CD
 APP HEALTH ♥ Healthy     SYNC STATUS ✓ Synced to main (2bbafa1)
 나무: host-demo → deploy demo → rs → pod 2 · svc demo · ing demo
 PS> kubectl get deploy,svc,ingress demo
-deployment.apps/demo   2/2     2            2           1m       ← git 의 replicas 2
+deployment.apps/demo   2/2     2            2           1m       ← values-dev.yaml 의 replicaCount 2
 ```
 
 **확인** — Synced · Healthy 가 되고 demo 가 2/2 면 됩니다. Healthy 는 Argo CD 가 우리 readiness 를 읽은 결과입니다.
@@ -602,12 +628,12 @@ deployment.apps/demo   2/2     2            2           1m       ← git 의 rep
 
 ### ③ git 으로 2.0 — 브라우저에서 커밋
 
-탭 ① 에 지켜보기(첫 줄)를 켜고, Gitea 에서 이미지 1.0 → 2.0 커밋 뒤 Argo CD 에서 맞춥니다.
+탭 ① 에 지켜보기(첫 줄)를 켜고, Gitea 에서 값 파일의 판 1.0 → 2.0 커밋 뒤 Argo CD 에서 맞춥니다.
 
 ```powershell
 kubectl exec -it curl -- sh -c 'while true; do curl -s -m1 demo/ | grep ver || echo FAIL; sleep 0.5; done'
-# Gitea → k8s-study-gitops → app → deployment.yaml → 연필(파일 수정)
-# image 줄의 1.0 → 2.0 → 맨 아래 '변경 내용을 커밋' (main 브랜치에 직접)
+# Gitea → k8s-study-gitops → app → values-dev.yaml → 연필(파일 수정)
+# tag: "1.0" → "2.0" (따옴표는 그대로) → 맨 아래 '변경 내용을 커밋'
 # Argo CD → REFRESH → DIFF(바뀐 줄 보기) → SYNC → SYNCHRONIZE
 ```
 
@@ -621,9 +647,9 @@ Argo CD · DIFF
 version  : 1.0  …  version  : 2.0     ← 섞였다가 2.0 만 · FAIL 없음
 ```
 
-**확인** — 커밋만 했는데 2.0 이 되고 FAIL 이 없으면 됩니다. 실습 11 의 readiness · preStop 이 git 파일에 들어 있어서입니다.
+**확인** — 값 한 줄을 커밋했는데 이미지 줄이 바뀌어 2.0 이 되고 FAIL 이 없으면 됩니다. 틀에 실습 11 의 readiness · preStop 이 들어 있어서입니다.
 
-**막히면** — REFRESH 뒤에도 Synced 면 커밋이 안 된 것(Gitea 의 커밋 목록) · 기다리면 30초 안에 저절로 OutOfSync.
+**막히면** — 이미지가 …:2 로 나오면 따옴표가 빠진 것 · REFRESH 뒤에도 Synced 면 커밋이 안 된 것 · 기다리면 30초 안에 OutOfSync.
 
 ### ④ 되돌리기 = git
 
@@ -639,8 +665,8 @@ version  : 1.0  …  version  : 2.0     ← 섞였다가 2.0 만 · FAIL 없음
 
 ```text
 Gitea · 커밋 목록
-Revert "app/deployment.yaml 업데이트"   ← 되돌리는 새 커밋 (기록이 남음)
-app/deployment.yaml 업데이트            ← ③ 의 커밋 (Gitea 가 붙인 기본 메시지)
+Revert "app/values-dev.yaml 업데이트"   ← 되돌리는 새 커밋 (기록이 남음)
+app/values-dev.yaml 업데이트            ← ③ 의 커밋 (Gitea 가 붙인 기본 메시지)
 탭 ①
 version  : 2.0  …  version  : 1.0
 ```
@@ -667,7 +693,7 @@ demo   2/5     2            2           20m
 demo   2/2     2            2           20m      ← 2초 만에 되돌아감 (EKS 실측)
 ```
 
-**확인** — 누가 되돌렸는지(Argo CD 의 Self Heal)와, 그럼 5개가 필요하면 어디를 고쳐야 하는지(git) 말할 수 있으면 성공.
+**확인** — 누가 되돌렸는지(Argo CD 의 Self Heal)와, 5개가 필요하면 어디를 고치는지(git 의 values-dev.yaml · replicaCount) 말할 수 있으면 성공.
 
 **막히면** — 되돌아가지 않으면 SELF HEAL 이 꺼져 있는 것 · Argo CD 화면 맨 위에 Auto sync is enabled 가 보여야 함.
 

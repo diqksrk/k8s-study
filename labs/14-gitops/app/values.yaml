@@ -1,0 +1,4 @@
+# 실습 14. git 저장소(Gitea)의 app/values.yaml 과 같은 내용 — 참고용 사본. 고치는 것은 브라우저의 Gitea 에서
+# 모든 환경에 같은 값. 환경마다 다른 값은 values-dev.yaml 에 (같은 이름을 두 파일에 두지 않는다)
+image:
+  repository: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app

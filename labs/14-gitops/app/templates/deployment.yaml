@@ -1,11 +1,11 @@
-# 실습 14. git 저장소(Gitea)의 app/deployment.yaml 과 같은 내용 — 참고용 사본. 고치는 것은 브라우저의 Gitea 에서
-# 실습 11 ③ 의 끊김 없는 demo 를 그대로 git 에 올렸다. 파드 자리를 아끼려고 replicas 2
+# 실습 14. git 저장소(Gitea)의 app/templates/deployment.yaml 과 같은 내용 — 참고용 사본. 고치는 것은 브라우저의 Gitea 에서
+# 실습 11 ③ 의 끊김 없는 demo 그대로. 값을 끼우는 자리는 두 군데(파드 수 · 이미지)만 — 값은 values*.yaml 에서
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: demo
 spec:
-  replicas: 2
+  replicas: {{ .Values.replicaCount }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -22,7 +22,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: demo
-          image: 844171074409.dkr.ecr.ap-northeast-2.amazonaws.com/k8s-study/demo-app:1.0
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: 8080
           readinessProbe:

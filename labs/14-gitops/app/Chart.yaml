@@ -1,0 +1,5 @@
+# 실습 14. git 저장소(Gitea)의 app/Chart.yaml 과 같은 내용 — 참고용 사본. 고치는 것은 브라우저의 Gitea 에서
+# 헬름 차트 = 틀(templates/) + 값(values*.yaml). Argo CD 가 이 폴더를 헬름으로 렌더해서 내 칸에 맞춘다
+apiVersion: v2
+name: demo
+version: 0.1.0
