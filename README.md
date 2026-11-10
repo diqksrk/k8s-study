@@ -1,6 +1,6 @@
 # 쿠버네티스 스터디 실습
 
-『쿠버네티스 인 액션』 스터디 실습 저장소입니다. 1회차(아키텍처 · Pod · Deployment · Service · ConfigMap · Secret)는 실습 1 ~ 5, 2회차(Ingress · Volume · PV/PVC · HPA · 리소스 · Rolling Update)는 실습 6 ~ 10, 3회차(Probe · 스케줄링 · 로그 · 모니터링 · Argo CD · Argo Rollouts)는 실습 11 ~ 16 입니다.
+『쿠버네티스 인 액션』 스터디 실습 저장소입니다. 1회차(아키텍처 · Pod · Deployment · Service · ConfigMap · Secret)는 실습 1 ~ 5, 2회차(Ingress · Volume · PV/PVC · HPA · 리소스 · Rolling Update)는 실습 6 ~ 10, 3회차(Probe · 스케줄링 · 로그 · 모니터링 · Argo CD)는 실습 11 ~ 14 · 16 입니다.
 
 ## 시작 전에
 
@@ -27,7 +27,7 @@
 12. [labs/12-schedule](labs/12-schedule) — 노드 라벨, AZ 마다 고루 퍼뜨리기, 고장 11 · 12(라벨 · 테인트)
 13. [labs/13-observe](labs/13-observe) — 로그 · 죽기 전 로그 · 이벤트, Grafana · Prometheus
 14. [labs/14-gitops](labs/14-gitops) — Gitea 에 커밋해 Argo CD 로 배포, git 으로 되돌리기, 고장 13
-15. [labs/15-canary](labs/15-canary) — Argo Rollouts 카나리 25% → promote, 고장 14
+15. [labs/15-canary](labs/15-canary) — Argo Rollouts 카나리 (3회차 수업에서는 하지 않음)
 16. [labs/16-fix-it](labs/16-fix-it) — 종합 수리
 
 2 · 3회차 실습 YAML 의 `__HOST__` 는 사람마다 받는 압축에서 내 주소로 채워져 있습니다. 3회차 압축에는 내 Gitea · Argo CD 계정 파일 `accounts.txt` 가 더해집니다(남에게 보내지 않습니다).

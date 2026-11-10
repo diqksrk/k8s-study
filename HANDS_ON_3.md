@@ -1,20 +1,19 @@
 # 실습 가이드 — 쿠버네티스 스터디 3회차
 
-2회차까지 만든 내 칸 · 내 앱(demo)에 이어서, 앱이 일하는지 묻고(프로브), 파드가 갈 노드를 고르고(스케줄링), 지난 일을 보고(로그 · 모니터링), git 으로 배포하고(Argo CD), 새 판을 조금씩 내보냅니다(Argo Rollouts). 실습 번호는 2회차에 이어서 11번부터입니다. 실습마다 일부러 망가뜨린 단계(고장)가 있습니다. 원인을 찾아 고쳐 보세요.
+2회차까지 만든 내 칸 · 내 앱(demo)에 이어서, 앱이 일하는지 묻고(프로브), 파드가 갈 노드를 고르고(스케줄링), 지난 일을 보고(로그 · 모니터링), git 으로 배포합니다(Argo CD). 실습 번호는 2회차에 이어서 11번부터입니다. 실습마다 일부러 망가뜨린 단계(고장)가 있습니다. 원인을 찾아 고쳐 보세요.
 
 | 실습 | 폴더 | 하는 일 |
 |---|---|---|
 | 0. 준비 | — | 새 압축 풀기, 2회차 끝 모습으로 맞추기, 지켜보기 켜기 |
 | 11. 프로브 · 끊김 없는 교체 | `labs/11-probe` | readiness, 고장 9, FAIL 없이 2.0 으로, 고장 10, startupProbe |
 | 12. 스케줄링 | `labs/12-schedule` | 노드 라벨, AZ 마다 하나씩, 고장 11 · 12 (갈 곳 없는 파드 · 들어갈 수 없는 노드) |
-| 13. 로그 · 모니터링 | `labs/13-observe` | 지금 로그 · 죽기 전 로그, 이벤트, Grafana, Loki 로그, Prometheus |
+| 13. 로그 · 모니터링 | `labs/13-observe` | 지금 로그 · 죽기 전 로그, 이벤트, Grafana, Loki 로그 대시보드, 대시보드 없이 찾기(Drilldown), 숫자 쿼리와 알림(Grafana) |
 | 14. GitOps — Argo CD | `labs/14-gitops` | 헬름 값 파일을 브라우저로 커밋해 배포, git 으로 되돌리기, 고장 13 |
-| 15. 조금씩 바꾸기 — Argo Rollouts | `labs/15-canary` | 25% 만 먼저, promote, 고장 14 |
 | 16. 종합 수리 | `labs/16-fix-it` | 밖에서 열리지 않는 shop 고치기 (힌트 없음) |
 
 ## 실습 0. 준비
 
-받는 것은 1 · 2회차와 같습니다. **3회차 `k8s-study.zip`** 을 1:1 메시지로 받고(2회차 압축에 3회차 실습 파일 · 내 계정 파일 `accounts.txt` · 카나리 도구 `kubectl-argo-rollouts` 가 더해진 것 · 접속 파일은 같음), 이 실습 가이드를 받습니다. 앞 회차에 오지 않았어도 아래 명령 그대로 하면 됩니다.
+받는 것은 1 · 2회차와 같습니다. **3회차 `k8s-study.zip`** 을 1:1 메시지로 받고(2회차 압축에 3회차 실습 파일과 내 계정 파일 `accounts.txt` 가 더해진 것 · 접속 파일은 같음), 이 실습 가이드를 받습니다. 앞 회차에 오지 않았어도 아래 명령 그대로 하면 됩니다.
 
 `k8s-study.zip` 은 **다운로드 폴더**에 저장합니다. 명령은 누구나 같습니다. 이름이나 아이디를 바꿔 칠 곳은 없습니다.
 
@@ -33,7 +32,7 @@ $p = [Environment]::GetEnvironmentVariable("Path", "User")
 
 $env:Path += ";$HOME\k8s-study\bin"
 $env:KUBECONFIG = "$HOME\k8s-study\kubeconfig"
-kubectl argo rollouts version
+kubectl version --client
 kubectl get pods
 ```
 
@@ -43,16 +42,16 @@ kubectl get pods
 setopt interactivecomments; echo 'setopt interactivecomments' >> ~/.zshrc
 unzip -oq ~/Downloads/k8s-study.zip -d ~                          # -o 는 2회차 폴더를 묻지 않고 덮어쓰기
 echo 'export KUBECONFIG=~/k8s-study/kubeconfig' >> ~/.zshrc; export KUBECONFIG=~/k8s-study/kubeconfig
-brew install kubectl argoproj/tap/kubectl-argo-rollouts           # 이미 있으면 그대로
-kubectl argo rollouts version
+brew install kubectl                                               # 이미 있으면 그대로
+kubectl version --client
 kubectl get pods
 ```
 
 나와야 할 화면 (예시)
 
 ```text
-PS> kubectl argo rollouts version
-kubectl-argo-rollouts: v1.10.1+…
+PS> kubectl version --client
+Client Version: v1.34.13
 PS> kubectl get pods  →  curl   1/1   Running   0   13d     ← 2회차에서 남긴 것 (처음이면 No resources found)
 ```
 
@@ -291,7 +290,7 @@ slow-broken   0/1     1            0           6m      ← 실습 13 에서 다�
 
 ```powershell
 kubectl get nodes -L topology.kubernetes.io/zone,node.kubernetes.io/instance-type,role
-kubectl get pods -l app=demo -o wide                # NODE 칸
+kubectl get pods -l app=demo -o wide                # NODE 열 = 노드 이름
 ```
 
 나와야 할 화면 (예시)
@@ -303,11 +302,14 @@ ip-192-168-64-145.…        Ready    …   ap-northeast-2a   t3.medium
 ip-192-168-58-30.…         Ready    …   ap-northeast-2c   t3.medium
 ip-192-168-11-197.…        Ready    …   ap-northeast-2d   t3.medium
 ip-192-168-70-12.…         Ready    …   ap-northeast-2a   t3.large        tools
+PS> kubectl get pods -l app=demo -o wide
+demo-86bffd5566-h6hwr   1/1   Running   …   ip-192-168-58-30.…    ← 위 표에서 2c
+demo-86bffd5566-…       1/1   Running   …   ip-192-168-58-30.…    ← 같은 노드에 몰려 있을 수도
 ```
 
-**확인** — 노드 4대 중 ROLE 이 tools 인 한 대가 보이면 됩니다. 내 demo 는 tools 가 아닌 세 대 어딘가에 있습니다.
+**확인** — ROLE 이 tools 인 노드가 한 대 보이고, 내 demo 의 NODE 를 위 NAME 에 맞춰 AZ 를 말할 수 있으면 됩니다.
 
-**막히면** — Forbidden 이 나오면 접속 파일(KUBECONFIG)이 3회차 압축의 것인지 봅니다.
+**막히면** — Forbidden 이 나오면 바로 알려 주세요 — 노드 보기(get · describe) 권한은 1회차부터 내 계정에 있습니다.
 
 ### ② AZ 마다 하나씩
 
@@ -315,7 +317,7 @@ spread.yaml 의 TODO 를 topology.kubernetes.io/zone 으로 고쳐 apply 하고 
 
 ```powershell
 kubectl apply -f labs/12-schedule/spread.yaml
-kubectl get pods -l app=spread -o wide              # NODE 칸 · AZ 셋에 하나씩
+kubectl get pods -l app=spread -o wide              # NODE 열 · AZ 셋에 하나씩
 ```
 
 나와야 할 화면 (예시)
@@ -330,17 +332,19 @@ spread-58c99cfc6-zjj8p   1/1   Running   …   ip-192-168-11-197.…   ← 2d
 
 **확인** — 세 파드가 세 노드(세 AZ)에 하나씩이면 됩니다. 2회차 demo 처럼 한 노드에 몰리지 않습니다.
 
-**막히면** — 셋 다 Pending 이면 TODO 그대로 — Events 에 missing required label · 지우고 고쳐서 다시 apply.
+**막히면** — 셋 다 Pending 이고 Events 에 missing required label 이면 TODO 를 안 고친 것 — 파일을 고쳐 다시 apply.
 
 ### ③ 고장 11 — 갈 노드가 없다
 
-파드 하나를 띄우고, Pending 인 이유를 describe 의 Events 에서 읽습니다.
+파드 하나를 띄우고, Pending 인 이유를 describe 에서 읽은 뒤 고쳐서 다시 띄웁니다.
 
 ```powershell
 kubectl apply -f labs/12-schedule/pending.yaml
 kubectl get pod picky                               # Pending
-kubectl describe pod picky                          # 맨 아래 Events
-kubectl delete pod picky                            # 고쳐서 뜨는 것까지 봤으면 (자리 아끼기)
+kubectl describe pod picky                          # Node-Selectors 줄 · 맨 아래 Events
+kubectl delete pod picky                            # pending.yaml 의 disktype: ssd 를 고친 뒤 →
+kubectl apply -f labs/12-schedule/pending.yaml
+kubectl get pod picky -o wide                       # Running 을 봤으면 delete pod picky (자리 아끼기)
 ```
 
 나와야 할 화면 (예시)
@@ -349,13 +353,14 @@ kubectl delete pod picky                            # 고쳐서 뜨는 것까지
 PS> kubectl get pod picky
 picky   0/1     Pending   0          5s
 PS> kubectl describe pod picky
+Node-Selectors:  disktype=ssd
   Warning  FailedScheduling  5s  default-scheduler  0/4 nodes are available:
            1 node(s) had untolerated taint(s), 3 node(s) didn't match Pod's node affinity/selector.
 ```
 
-**확인** — 노드 4대가 각각 왜 안 되는지 나뉘어 나옵니다. 3대는 라벨이 안 맞고, 1대는 테인트 — 그 라벨을 가진 노드가 없다고 말할 수 있으면 성공.
+**확인** — Node-Selectors 의 disktype=ssd 라벨을 가진 노드가 하나도 없어서 Pending 이라고 말할 수 있으면 성공.
 
-**막히면** — 고치기: disktype: ssd → topology.kubernetes.io/zone: ap-northeast-2a 로 고치고 delete 후 apply.
+**막히면** — 고치기: disktype: ssd → topology.kubernetes.io/zone: ap-northeast-2a (들여쓰기는 그대로).
 
 ### ④ 고장 12 — 못 들어가는 노드
 
@@ -364,7 +369,7 @@ PS> kubectl describe pod picky
 ```powershell
 kubectl describe node -l role=tools                 # Taints 줄
 kubectl apply -f labs/12-schedule/tools-pod.yaml
-kubectl describe pod visitor                        # 맨 아래 Events
+kubectl describe pod visitor                        # Node-Selectors · Tolerations · 맨 아래 Events
 kubectl delete -f labs/12-schedule/tools-pod.yaml   # tolerations 주석을 푼 뒤 →
 kubectl apply -f labs/12-schedule/tools-pod.yaml
 kubectl get pod visitor -o wide                     # NODE = 도구 노드
@@ -373,37 +378,42 @@ kubectl get pod visitor -o wide                     # NODE = 도구 노드
 나와야 할 화면 (예시)
 
 ```text
-PS> kubectl describe node -l role=tools
-Taints:             dedicated=tools:NoSchedule
+PS> kubectl describe node -l role=tools     →   Taints:   dedicated=tools:NoSchedule
+PS> kubectl describe pod visitor
   Warning  FailedScheduling  …  0/4 nodes are available: 1 node(s) had untolerated taint(s), 3 …
 PS> kubectl get pod visitor -o wide
-visitor   1/1     Running   0          8s    10.42.3.16   ip-192-168-70-12.…   ← 도구 노드
+visitor   1/1     Running   0          8s    192.168.…    ip-192-168-70-12.…   ← 도구 노드
 ```
 
-**확인** — 라벨(nodeSelector)은 '여기로', 테인트는 '허락받은 것만' — 둘 다 맞아야 들어간다고 말할 수 있으면 성공.
+**확인** — nodeSelector 는 '여기로', 테인트는 '허락받은 파드만' — 둘 다 맞아야 들어간다고 말할 수 있으면 성공.
 
-**막히면** — 주석은 네 줄을 골라 VS Code 에서 Ctrl+/ (Mac Cmd+/) · tolerations: 가 nodeSelector: 와 같은 칸이면 맞음.
+**막히면** — 주석은 네 줄을 골라 VS Code 에서 Ctrl+/ (Mac Cmd+/) · tolerations: 의 시작 위치가 nodeSelector: 와 같으면 맞음.
 
 ### 정리 — 쉬는 시간 전에
 
-실습 12 에서 만든 것을 지웁니다. demo · slow · slow-broken · curl 만 남깁니다.
+실습 12 에서 만든 것을 지우고, 실습 13 에서 볼 demo 의 로그 설정을 켜 둡니다(쉬는 동안 파드가 바뀜).
 
 ```powershell
 kubectl delete -f labs/12-schedule --ignore-not-found
+kubectl patch deploy demo --patch-file labs/13-observe/demo-logging.yaml   # 실습 13 준비
 kubectl get pods
 ```
 
 나와야 할 화면 (예시)
 
 ```text
+PS> kubectl patch deploy demo --patch-file labs/13-observe/demo-logging.yaml
+deployment.apps/demo patched
 PS> kubectl get pods
 curl                          1/1     Running            0          13d
-demo-86bffd5566-h6hwr         1/1     Running            0          17m       (demo 셋)
+demo-78c85d487b-9mqqs         1/1     Running            0          20s       (demo 셋 · 이름이 바뀜)
 slow-7c9d8f6b4-m3p8z          1/1     Running            0          11m
 slow-broken-6d9f7c8b5-x2kq7   0/1     CrashLoopBackOff   9          14m
 ```
 
-**확인** — spread · picky · visitor 가 없으면 됩니다(Terminating 은 곧 사라짐).
+**확인** — spread · picky · visitor 가 없고, demo 셋이 새 이름으로 1/1 이면 됩니다(바뀌는 중이면 쉬는 동안 끝남).
+
+**막히면** — patched 대신 not found 면 demo 가 없는 것 — 실습 11 ③ 의 deployment-zero.yaml 을 다시 apply 한 뒤 이 줄.
 
 ---
 
@@ -426,19 +436,20 @@ kubectl get pods -l app=slow-broken                 # RESTARTS
 
 ```text
 PS> kubectl logs -l app=demo --prefix --tail=1
-[pod/demo-86bffd5566-h6hwr/demo] … DispatcherServlet : Completed initialization in 197 ms
-[pod/demo-86bffd5566-hwh85/demo] … DispatcherServlet : Completed initialization in 93 ms
+[pod/demo-…-9mqqs/demo] level=info type=access requestId=- method=GET path=/actuator/health/readiness status=200
+[pod/demo-…-qrh74/demo] level=info type=access requestId=- method=GET path=/ status=200 ms=6
+  (요청마다 한 줄 · 앱 로그는 {"log.level":"INFO", … } JSON 한 줄 — 실습 12 끝에 켠 설정)
 PS> kubectl get pods -l app=slow-broken
 slow-broken-9c7979958-bjnmz   0/1     CrashLoopBackOff   9 (73s ago)   14m
 ```
 
-**확인** — --prefix 로 어느 파드의 줄인지 보이고, --previous 는 지금이 아니라 직전에 죽은 컨테이너의 로그라는 것을 알면 됩니다.
+**확인** — --prefix 로 줄마다 어느 파드인지 보이고, --previous 끝에 'Started DemoApplication' 줄이 없으면 됩니다 = 다 뜨기 전에 liveness 가 죽인 것.
 
-**막히면** — --previous 에 Started 줄이 없으면 그게 답(다 뜨기 전에 죽음) · Found 3 pods, using … 는 하나만 골랐다는 뜻.
+**막히면** — Found 3 pods, using … 는 셋 중 하나만 골랐다는 뜻 · readiness 가 2초마다 부르는 것도 요청이라 한 줄씩 남음.
 
 ### ② 이벤트 — 칸의 알림판
 
-내 칸에서 일어난 일을 시간 순서로 보고, 경고만 골라 봅니다. 오늘 만난 고장이 다 들어 있습니다.
+내 칸의 일을 시간 순서로 보고 경고만 골라 봅니다. 마지막으로 일어난 뒤 1시간이 지나면 지워집니다.
 
 ```powershell
 kubectl events                                      # 아래쪽이 최근
@@ -456,83 +467,115 @@ LAST SEEN            TYPE      REASON             OBJECT                  MESSAG
 18s                  Warning   FailedScheduling   Pod/visitor             0/4 nodes are available: …
 ```
 
-**확인** — 실습 11 · 12 의 고장이 시간 순서로 보이면 됩니다. 이벤트는 1시간이 지나면 지워집니다.
+**확인** — slow-broken · 실습 12 의 고장이 시간 순서로 보이면 됩니다. 고장 9 줄이 없으면 정상 — 다시 안 일어난 채 1시간이 지나 지워진 것으로, ④ Loki 에서 다시 봅니다.
 
-**막히면** — (x6 over 13m) 은 같은 일이 13분 동안 6번 · 오래된 줄이 안 보이면 1시간이 지난 것.
+**막히면** — (x6 over 13m) 은 같은 일이 13분 동안 6번 · 되풀이되는 일은 한 줄로 남고, 일어날 때마다 1시간을 다시 셈.
 
-### ③ Grafana — 지난 1시간
+### ③ Grafana — 지난 3시간
 
 브라우저로 Grafana 를 열어 내 칸의 CPU · 메모리 그래프를 봅니다. 로그인은 없습니다.
 
 ```powershell
 http://grafana.43-201-184-138.sslip.io/             # 브라우저 주소창
 # 왼쪽 메뉴 Dashboards → Kubernetes / Compute Resources / Namespace (Pods)
-# 위의 namespace 칸 → k8s-study- 뒤에 accounts.txt 의 아이디가 붙은 것
-# 오른쪽 위 시간 → Last 1 hour
-# 같은 목록의 … / Pod → pod 칸에서 slow → CPU Throttling (뜰 때의 봉우리)
+# 위의 namespace 목록 → 내 칸 (k8s-study- 뒤에 accounts.txt 의 아이디)
+# 오른쪽 위 시간 → Last 3 hours (1시간 넘게 지난 실습 11 까지)
+# Dashboards 목록 → … / Compute Resources / Pod → pod 목록 slow-… → CPU Throttling 패널
 ```
 
 나와야 할 화면 (예시)
 
 ```text
 브라우저
-CPU Usage      — 파드마다 선 하나 · 실습 11 에서 demo 를 바꿀 때마다 튄 자리
+CPU Usage      — 파드마다 선 하나 · demo 를 바꿀 때마다 옛 선이 끊기고 새 선이 생김
 Memory Usage   — demo 셋이 120~200Mi 근처
-CPU Throttling — slow 가 뜨는 동안 한도(150m)에 눌린 봉우리 · 다 뜬 뒤엔 0 근처
+CPU Throttling — slow 가 뜨는 동안 한도(150m)에 눌린 봉우리 · 다 뜬 뒤엔 낮게(예: 8%)
+  값 = 0.1초 구간 중 한도에 걸린 비율 · 점선 25% = 기본 알림 기준(15분 넘게 계속이면)
 ```
 
-**확인** — kubectl top 은 지금 값 하나뿐인데, 여기는 지난 1시간이 선으로 남아 있다는 것을 보면 됩니다.
+**확인** — kubectl top 은 지금 값 하나뿐인데, 여기는 지난 3시간이 선으로 남아 있다는 것을 보면 됩니다.
 
-**막히면** — 그래프가 비면 namespace 칸 · 시간을 다시 · 안 열리면 회사 망 — 휴대폰 데이터로 같은 주소.
+**막히면** — 그래프가 비면 namespace 목록 · 시간을 다시 · 안 열리면 회사 망 — 휴대폰 데이터로 같은 주소.
 
 ### ④ Loki — 죽은 컨테이너의 로그까지
 
-Grafana 의 로그 대시보드에서 slow-broken 이 죽을 때마다 남긴 로그를 한 번에 봅니다.
+로그 대시보드의 '찾을 글자' 칸으로 slow-broken 의 시작 줄을 세고, 지워진 이벤트를 찾습니다.
 
 ```powershell
-# Grafana → Dashboards → 스터디 · 내 칸 로그
-# namespace 칸 → k8s-study- 뒤에 accounts.txt 의 아이디
-# pod 칸 → slow-broken-… · 오른쪽 위 시간 → Last 1 hour
-# 아래 '이벤트' 칸 → 실습 11 · 12 의 경고도 여기에 남음
+# Grafana → Dashboards → 스터디 · 내 칸 로그        (시간은 처음부터 Last 3 hours)
+# namespace 목록 → 내 칸 (k8s-study- 뒤에 accounts.txt 의 아이디) · pod 목록 → slow-broken-…
+# 찾을 글자 칸 → Starting DemoApplication → Enter → 왼쪽 위 '찾은 로그 줄'
+# 찾을 글자 칸 → probe failed → Enter → 맨 아래 '이벤트' 패널 (pod 와 상관없이 내 칸 전부)
 ```
 
 나와야 할 화면 (예시)
 
 ```text
 브라우저 · 스터디 · 내 칸 로그
-… Starting DemoApplication using Java 21 …   ← 다시 시작할 때마다 한 번
-… No active profile set, falling back to …
-… Starting DemoApplication using Java 21 …   ← 다음 컨테이너
---previous 는 바로 앞 하나뿐 · 여기는 죽은 컨테이너 전부
+찾은 로그 줄  27       ← 컨테이너마다 한 줄 (RESTARTS 33 · 20초 만에 죽은 몇 개는 빠짐)
+로그 양 — 다시 시작할 때마다 막대 · 아래 로그 패널엔 그 줄만
+이벤트 · reason=Unhealthy type=Warning … msg="Readiness probe failed: …"   ← 고장 9
+--previous 는 바로 앞 하나뿐 · 여기는 죽은 컨테이너 거의 전부 · 1시간 지난 이벤트도
 ```
 
-**확인** — 'Starting DemoApplication' 이 RESTARTS 보다 하나 많이(처음 것까지) 되풀이되면 됩니다. 로그를 파드 밖(Loki)에 쌓아 두었기 때문입니다.
+**확인** — '찾은 로그 줄' 이 여럿(RESTARTS 와 비슷하게)이고, probe failed 로 찾은 이벤트에 고장 9 (Readiness) 줄이 있으면 됩니다. 파드 밖(Loki)에 쌓아 두어서입니다.
 
-**막히면** — pod 칸이 비면 시간을 Last 1 hour 로 · 줄이 없으면 namespace 칸 · 막 뜬 줄은 1분쯤 늦게 들어옴.
+**막히면** — pod 목록이 비면 namespace 목록부터 · 0 이면 찾을 글자의 띄어쓰기 (대소문자는 상관없음) · 막 찍힌 줄은 1분쯤 늦음.
 
-### ⑤ Prometheus 한 줄
+### ⑤ 요청 번호로 찾기 — Drilldown
 
-Prometheus 화면에 쿼리를 한 줄씩 넣어 다시 시작 횟수와 CPU 눌림을 숫자로 봅니다.
+요청 번호를 붙여 demo 를 두 번 부르고, Grafana 기본 로그 화면에서 그 번호와 레벨로 찾습니다.
 
 ```powershell
-http://prom.43-201-184-138.sslip.io/                # 브라우저 · 위 칸에 한 줄 넣고 Execute
-kube_pod_container_status_restarts_total{container="slow-broken"}
-container_cpu_cfs_throttled_periods_total{container="slow"}
+kubectl exec curl -- curl -s -H "X-Request-Id: req-1109-0001" demo/            # 보통 요청
+kubectl exec curl -- curl -s -X POST -H "X-Request-Id: req-1109-0002" demo/    # 잘못된 요청
+# Grafana 왼쪽 메뉴 Drilldown → Logs · Last 15 minutes → demo 칸 Show logs
+# 위 Labels 칸 → namespace → = → 내 칸 · Line filter 칸 → req-1109-0002
+# Line filter 를 지우고 Log levels → warn
 ```
 
 나와야 할 화면 (예시)
 
 ```text
-브라우저 · Table
-kube_pod_container_status_restarts_total{…namespace="k8s-study-host", pod="slow-broken-…"}   9
-container_cpu_cfs_throttled_periods_total{…pod="slow-…"}   412   ← 뜬 뒤 지금까지 눌린 횟수(누계)
+브라우저 · Drilldown → Logs
+Labels   service_name = demo   namespace = k8s-study-host        (줄을 펼치면 env = dev)
+level=info type=access requestId=req-1109-0002 method=POST path=/ status=405 ms=40
+warn → {"log.level":"WARN", "service.environment":"dev", … "message":"Resolved […'POST' is not supported]"}
+요청 번호 하나로 — 어느 파드가 · 언제 · 무슨 결과(405) · 같은 때의 경고 줄
 ```
 
-**확인** — 모든 사람의 칸이 한 표에 나옵니다. 내 칸(namespace)의 줄을 찾아 숫자를 읽으면 됩니다.
+**확인** — req-1109-0002 로 찾은 줄이 status=405 이고, warn 으로 거른 줄에 같은 시각의 'POST' is not supported 가 있으면 됩니다.
 
-**막히면** — Graph 탭으로 바꾸면 선으로 · 결과가 없으면 따옴표가 큰따옴표(")인지.
+**막히면** — 줄이 없으면 1분 뒤 새로 고침(수집이 늦음) · 다른 사람도 같은 번호라 namespace 를 꼭 거름 · demo 칸이 없으면 시간을 넓힘.
 
-### ⑥ 부하를 걸면 (먼저 끝났으면)
+### ⑥ Grafana — 숫자를 묻고, 알림 보기
+
+Explore 에서 숫자를 한 줄로 묻고, 그 숫자로 도는 기본 알림이 내 칸에서 울리는지 봅니다.
+
+```powershell
+# Grafana 왼쪽 메뉴 Explore → 오른쪽 Code → 칸에 한 줄 넣고 오른쪽 위 Run query
+kube_pod_container_status_restarts_total{container="slow-broken"}
+container_cpu_cfs_throttled_periods_total{container="slow"}
+# 왼쪽 메뉴 Alerting → Alert rules → 검색 KubePodCrashLooping → 이름 → Instances
+```
+
+나와야 할 화면 (예시)
+
+```text
+브라우저 · Explore (위 데이터 소스 칸 = Prometheus)
+…restarts_total{…namespace="k8s-study-host", pod="slow-broken-…"}  9   ← Graph 는 계단
+…throttled_periods_total{…pod="slow-…"}   618   ← 뜬 뒤 지금까지 눌린 횟수(누계)
+브라우저 · Alerting → Alert rules → KubePodCrashLooping
+Firing · Pending period 15m · max_over_time(…reason="CrashLoopBackOff"…[5m]) >= 1
+Instances — namespace=k8s-study-host  pod=slow-broken-…   Firing
+보낼 곳(Alertmanager)을 꺼 둬서 아무에게도 가지 않음 — 현업이면 여기서 메신저 · 전화로
+```
+
+**확인** — Explore 에 RESTARTS 와 같은 숫자가 나오고, Alert rules 에서 KubePodCrashLooping 의 내 칸 줄이 Firing 이면 됩니다(기본 규칙 · 15분 계속이면).
+
+**막히면** — 모든 사람 칸이 같이 나옴 — Search by label 칸에 namespace=내 칸 이름 · Pending 이면 아직 15분 전 · Builder 면 Code.
+
+### ⑦ 부하를 걸면 (먼저 끝났으면)
 
 2회차 실습 8 의 부하 파드를 다시 띄우고, 1분 뒤 Grafana 를 새로 고칩니다. 보고 나서 지웁니다.
 
@@ -649,7 +692,7 @@ version  : 1.0  …  version  : 2.0     ← 섞였다가 2.0 만 · FAIL 없음
 
 **확인** — 값 한 줄을 커밋했는데 이미지 줄이 바뀌어 2.0 이 되고 FAIL 이 없으면 됩니다. 틀에 실습 11 의 readiness · preStop 이 들어 있어서입니다.
 
-**막히면** — 이미지가 …:2 로 나오면 따옴표가 빠진 것 · REFRESH 뒤에도 Synced 면 커밋이 안 된 것 · 기다리면 30초 안에 OutOfSync.
+**막히면** — 이미지가 …:2 면 따옴표가 빠진 것 · REFRESH 뒤에도 Synced 면 커밋이 안 된 것 · 안 눌러도 30초 안에 저절로 OutOfSync.
 
 ### ④ 되돌리기 = git
 
@@ -665,15 +708,15 @@ version  : 1.0  …  version  : 2.0     ← 섞였다가 2.0 만 · FAIL 없음
 
 ```text
 Gitea · 커밋 목록
-Revert "app/values-dev.yaml 업데이트"   ← 되돌리는 새 커밋 (기록이 남음)
-app/values-dev.yaml 업데이트            ← ③ 의 커밋 (Gitea 가 붙인 기본 메시지)
+revert 3f9c2a1b7e                   ← 되돌리는 새 커밋 · 뒤는 ③ 커밋의 번호 (Revert 화면의 기본 제목)
+app/values-dev.yaml 업데이트        ← ③ 의 커밋 (Gitea 가 붙인 기본 메시지)
 탭 ①
 version  : 2.0  …  version  : 1.0
 ```
 
-**확인** — 탭 ① 이 1.0 으로 돌아오고, git 기록에 '되돌렸다' 는 커밋이 하나 더 남으면 됩니다.
+**확인** — 탭 ① 이 1.0 이 되고 git 에 되돌린 커밋이 하나 더 남으면 됩니다 — 2회차 undo 와 달리 git 도 1.0.
 
-**막히면** — 2회차 rollout undo 는 클러스터만 1.0 · 파일은 2.0 이었습니다. 오늘은 git 과 클러스터가 같습니다.
+**막히면** — 커밋 목록 주소는 …/k8s-study-gitops/commits/branch/main · SYNC 뒤에도 2.0 이면 REFRESH 부터.
 
 ### ⑤ 고장 13 — 고쳐도 되돌아간다
 
@@ -695,7 +738,7 @@ demo   2/2     2            2           20m      ← 2초 만에 되돌아감 (E
 
 **확인** — 누가 되돌렸는지(Argo CD 의 Self Heal)와, 5개가 필요하면 어디를 고치는지(git 의 values-dev.yaml · replicaCount) 말할 수 있으면 성공.
 
-**막히면** — 되돌아가지 않으면 SELF HEAL 이 꺼져 있는 것 · Argo CD 화면 맨 위에 Auto sync is enabled 가 보여야 함.
+**막히면** — 안 돌아오면 SELF HEAL 이 꺼진 것 · SYNC STATUS 의 Synced 아래 작은 글씨가 Auto sync is enabled. 여야 함.
 
 ### 정리 — 쉬는 시간 전에
 
@@ -710,168 +753,10 @@ kubectl get deploy
 ```text
 PS> kubectl get deploy
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
-demo   2/2     2            2           15m      ← 1.0 · git 이 원하는 상태
+demo   2/2     2            2           15m      ← 2/2 = git 의 replicaCount 2 (판은 ④ Revert 대로 1.0)
 ```
 
 **확인** — demo 2/2 만 있으면 됩니다. 이제 demo 를 kubectl 로 고쳐도 되돌아갑니다.
-
----
-
-## 실습 15. 조금씩 바꾸기 — Argo Rollouts — `labs/15-canary`
-
-디플로이먼트 대신 Argo Rollouts 의 Rollout 으로 새 판을 4개 중 1개에만 먼저 내보내고, 보고 나서 나머지를 바꿉니다. 실습 14 의 demo 와 섞이지 않게 이름이 canary 입니다. 탭을 두 개 씁니다(① 지켜보기 · ② 명령).
-
-### ① 도구 확인
-
-카나리 도구(kubectl 의 argo rollouts 플러그인)가 되는지 봅니다.
-
-```powershell
-kubectl argo rollouts version
-```
-
-나와야 할 화면 (예시)
-
-```text
-PS> kubectl argo rollouts version
-kubectl-argo-rollouts: v1.10.1+…
-```
-
-**확인** — 판 번호가 나오면 됩니다.
-
-**막히면** — unknown command 면 bin 의 kubectl-argo-rollouts.exe 가 없는 것 · Mac 은 실습 0 ① 의 brew 줄.
-
-### ② 카나리 띄우기
-
-Rollout canary 1.0 × 4 를 띄우고, 탭 ① 에서 지켜보기를 canary 로 켭니다(마지막 줄).
-
-```powershell
-kubectl apply -f labs/15-canary/rollout.yaml
-kubectl argo rollouts get rollout canary            # Healthy 가 될 때까지 몇 번
-kubectl exec -it curl -- sh -c 'while true; do curl -s -m1 canary/ | grep ver || echo FAIL; sleep 0.5; done'
-```
-
-나와야 할 화면 (예시)
-
-```text
-PS> kubectl argo rollouts get rollout canary
-Status:          ✔ Healthy          Step: 4/4     SetWeight: 100
-NAME                                KIND        STATUS     AGE    INFO
-└──# revision:1
-   └──⧉ canary-59699447d9           ReplicaSet  ✔ Healthy  105s   stable
-      ├──□ canary-59699447d9-2sh78  Pod         ✔ Running  105s   ready:1/1    (파드 넷)
-```
-
-**확인** — Status 가 Healthy 이고 탭 ① 에 version : 1.0 이 흐르면 됩니다.
-
-**막히면** — Progressing 이면 파드가 뜨는 중 · 탭 ① 의 FAIL 은 서비스 canary 가 아직 비어서.
-
-### ③ 25% 만 새 판으로
-
-rollout.yaml 의 1.0 을 2.0 으로 고쳐 apply 하고, 4개 중 1개만 2.0 인 채 멈춘 것을 봅니다.
-
-```powershell
-kubectl apply -f labs/15-canary/rollout.yaml            # 1.0 → 2.0 고친 뒤
-kubectl argo rollouts get rollout canary
-```
-
-나와야 할 화면 (예시)
-
-```text
-PS> kubectl argo rollouts get rollout canary
-Status:          ॥ Paused          Message: CanaryPauseStep
-Step:            1/4     SetWeight: 25     ActualWeight: 25     Updated: 1 · Current: 4
-├──# revision:2   ⧉ canary-6ff9dfbcd8   ✔ Healthy   canary    ← 2.0 × 1
-└──# revision:1   ⧉ canary-59699447d9   ✔ Healthy   stable    ← 1.0 × 3
-탭 ①
-version : 1.0 · 1.0 · 1.0 · 2.0 …     ← 넷에 하나꼴로 2.0 · FAIL 없음
-```
-
-**확인** — Paused · 1/4 · 2.0 하나 · 1.0 셋(모두 4개)이면 됩니다. 멈춘 동안 새 판을 보고 승인할지 정합니다.
-
-**막히면** — unchanged 면 저장 안 함 · Progressing 이 길면 새 파드가 뜨는 중.
-
-### ④ promote — 승인
-
-승인하면 50% → 30초 → 100% 로 저절로 갑니다. 끝까지 지켜봅니다.
-
-```powershell
-kubectl argo rollouts promote canary
-kubectl argo rollouts get rollout canary --watch    # Healthy 까지 · Ctrl+C
-```
-
-나와야 할 화면 (예시)
-
-```text
-PS> kubectl argo rollouts promote canary
-rollout 'canary' promoted
-Step: 2/4 (SetWeight 50) → 3/4 (30초) → 4/4
-Status:          ✔ Healthy      ← 2.0 × 4 가 이제 stable
-```
-
-**확인** — Healthy 가 되고 탭 ① 이 2.0 만이면 됩니다.
-
-### ⑤ 고장 14 — 멈춘 카나리
-
-2회차 고장 8 과 같은 새 판을 카나리로 내보냅니다. 60초 뒤의 상태를 보고 abort 합니다.
-
-```powershell
-kubectl apply -f labs/15-canary/rollout-broken.yaml
-kubectl argo rollouts get rollout canary            # 60초 뒤 다시
-kubectl argo rollouts abort canary
-kubectl apply -f labs/15-canary/rollout.yaml        # 2.0 판으로 되돌려 Healthy
-```
-
-나와야 할 화면 (예시)
-
-```text
-PS> kubectl argo rollouts get rollout canary
-Status:   ✖ Degraded     Step: 0/4     SetWeight: 25     ActualWeight: 0
-Message:  ProgressDeadlineExceeded: ReplicaSet "canary-656b7c6678" has timed out progressing.
-├──# revision:3   ⧉ canary-656b7c6678   ◌ Progressing   canary   ← 2.0+9090 · ready:0/1
-├──# revision:2   ⧉ canary-6ff9dfbcd8   ✔ Healthy       stable   ← 2.0 × 3
-탭 ①  version : 2.0 만 · FAIL 없음
-```
-
-**확인** — 새 판 파드가 준비되지 않아 25% 에서 멈추고, 60초 뒤 Degraded 가 되며, 그동안 옛 판(셋)만 일했다고 말할 수 있으면 성공.
-
-**막히면** — 원인은 새 판 파드의 describe(Readiness probe failed) · abort 뒤 Degraded 는 마지막 줄 apply 로 풂.
-
-### ⑥ 대시보드 (먼저 끝났으면)
-
-같은 도구로 브라우저 화면을 엽니다. 단계 막대와 Promote · Abort 버튼이 있습니다.
-
-```powershell
-kubectl argo rollouts dashboard                     # 끌 때 Ctrl+C
-# 브라우저  http://localhost:3100/rollouts → 위 NAMESPACE 칸에 내 칸 → canary
-```
-
-나와야 할 화면 (예시)
-
-```text
-PS> kubectl argo rollouts dashboard
-INFO[0000] Argo Rollouts Dashboard is now available at http://127.0.0.1:3100/rollouts
-```
-
-**확인** — 내 칸의 canary 가 단계 막대와 같이 보이면 됩니다. 내 PC 에서만 열리는 화면입니다.
-
-### 정리 — 종합 수리로 넘어가기 전에
-
-탭 ① 의 반복은 Ctrl+C 로 끄고, 카나리를 지웁니다.
-
-```powershell
-kubectl delete -f labs/15-canary/rollout.yaml
-kubectl get pods
-```
-
-나와야 할 화면 (예시)
-
-```text
-PS> kubectl get pods
-curl                    1/1     Running   0          13d
-demo-…                  1/1     Running   0          40m       (demo 둘 · Argo CD 가 맡음)
-```
-
-**확인** — curl 과 demo 둘만 남으면 됩니다.
 
 ---
 
@@ -937,8 +822,6 @@ kubectl apply -f solutions/11-probe
 | Argo CD `OutOfSync` | git 과 클러스터가 다름 | REFRESH → APP DIFF → SYNC |
 | Argo CD `Degraded` · `Progressing` 이 오래 감 | 파드가 준비되지 않음 | 리소스 트리에서 파드를 눌러 EVENTS · LOGS |
 | 손으로 고친 것이 되돌아감 | 자동 동기화 · Self Heal 이 git 으로 맞춤 | git(Gitea)에서 고치기 |
-| Rollout `Paused` | 사람이 promote 할 때까지 기다리는 단계 | `kubectl argo rollouts get rollout canary` |
-| Rollout `Degraded` | 새 판이 정해진 시간 안에 준비되지 않음 | `kubectl argo rollouts abort canary` 로 옛 판만 남기고, 새 판 파드의 Events |
 
 ## 끝나고
 
