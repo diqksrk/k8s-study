@@ -592,7 +592,7 @@ PS> kubectl exec curl -- curl -s http://demo.k8s-study-user2/pod
 demo-7f4c8d9b6-k3j7m                ← 옆 사람 파드
 ```
 
-**확인** — 옆 사람 파드 이름이 나옵니다. 옆 사람이 아직이면  demo.k8s-study-helper  를 부릅니다.
+**확인** — 옆 사람 파드 이름이 나옵니다. 옆 사람이 아직이면  demo.k8s-study-host  를 부릅니다.
 
 ### ⑤ 고장 2 — 접속이 안 되는 서비스
 
