@@ -4,7 +4,7 @@
 
 | 실습 | 폴더 | 하는 일 |
 |---|---|---|
-| 0. 준비 · 이어 쓰기 | — | 새 압축 풀기, 1회차 끝 모습으로 맞추기 |
+| 0. 준비 · 이어 쓰기 | — | 내 주소 채우기, 1회차 끝 모습으로 맞추기 |
 | 6. 인그레스 | `labs/06-ingress` | 내 주소로 밖에서 열기, 이름으로 나누기, 열면 안 되는 길 닫기, 고장 5 |
 | 7. 볼륨 · PV · PVC | `labs/07-volume` | 사라지는 폴더 · 남는 디스크, EBS 볼륨 보기, 설정을 파일로, 고장 6 |
 | 8. 리소스 · HPA | `labs/08-hpa` | 적어 둔 값과 쓰는 값, 2 코어 예약, 고장 7, 부하에 따라 늘어나는 파드 |
@@ -13,50 +13,55 @@
 
 ## 실습 0. 준비 · 이어 쓰기
 
-받는 것은 1회차와 같습니다. **2회차 `k8s-study.zip`** 을 1:1 메시지로 받고(1회차 압축에 2회차 실습 파일과 내 주소가 더해진 것 · 접속 파일은 같음), 이 실습 가이드를 받습니다. 1회차에 오지 않았어도 아래 명령 그대로 하면 됩니다.
+오늘 새로 받는 것은 이 실습 가이드뿐입니다. **1회차에 푼 `k8s-study` 폴더와 접속 파일을 그대로 씁니다.** 2회차 실습 파일도 그 폴더에 이미 들어 있고, 사람마다 다른 주소 자리만 `__HOST__` 로 비어 있습니다. ① 에서 이 자리를 내 주소로 채웁니다.
 
-`k8s-study.zip` 은 **다운로드 폴더**에 저장합니다. 명령은 누구나 같습니다. 이름이나 아이디를 바꿔 칠 곳은 없습니다.
+내 주소는 `<내 아이디>.52-78-167-165.sslip.io` 입니다. 아이디는 접속 파일의 칸 이름 `k8s-study-<아이디>` 에서 읽으므로, 명령은 누구나 같습니다. 이름이나 아이디를 바꿔 칠 곳은 없습니다.
 
-### ① 새 압축 풀기
+| 아이디 | 내 주소 |
+|---|---|
+| host | `host.52-78-167-165.sslip.io` |
+| user1 | `user1.52-78-167-165.sslip.io` |
+| user2 | `user2.52-78-167-165.sslip.io` |
+| user3 | `user3.52-78-167-165.sslip.io` |
 
-내 PC 에 맞는 칸 하나만 합니다. 1회차에 했어도 첫 줄부터 그대로 다시 칩니다. 첫 줄이 1회차 폴더를 덮어씁니다(1회차 때 고친 YAML 도 원래대로 돌아갑니다 — 오늘은 쓰지 않습니다).
+1회차에 오지 않아 `k8s-study` 폴더가 없으면, 1:1 로 받은 `k8s-study.zip` 을 1회차 가이드 실습 0 대로 먼저 풉니다.
+
+### ① 내 주소 채우기
+
+내 PC 에 맞는 칸 하나만 합니다. 첫 줄부터 한 줄씩 칩니다. 이미 채웠어도 다시 쳐도 됩니다(채울 자리가 없으면 아무것도 바꾸지 않습니다).
 
 **Windows** — PowerShell 에서 한 줄씩:
 
 ```powershell
-Expand-Archive "$HOME\Downloads\k8s-study.zip" -DestinationPath $HOME -Force
-
-$p = [Environment]::GetEnvironmentVariable("Path", "User")
-[Environment]::SetEnvironmentVariable("Path", "$p;$HOME\k8s-study\bin", "User")
-[Environment]::SetEnvironmentVariable("KUBECONFIG", "$HOME\k8s-study\kubeconfig", "User")
-
-$env:Path += ";$HOME\k8s-study\bin"
+cd $HOME\k8s-study
 $env:KUBECONFIG = "$HOME\k8s-study\kubeconfig"
-
-kubectl version --client
-kubectl get pods
+$ns = kubectl config view --minify -o jsonpath="{..namespace}"
+$h = ($ns -replace "^k8s-study-", "") + ".52-78-167-165.sslip.io"
+$f = (Get-ChildItem labs, solutions -Recurse -Filter *.yaml | Select-String -List __HOST__).Path
+foreach ($p in $f) { [IO.File]::WriteAllText($p, ([IO.File]::ReadAllText($p) -replace "__HOST__", $h)) }
+findstr "host:" labs\06-ingress\ingress.yaml
 ```
 
-**Mac** — 터미널에서 한 줄씩. 첫 줄은 이 가이드의 명령을 줄 끝 `# 설명` 까지 붙여 넣어도 에러가 나지 않게 하는 설정입니다(Mac 기본 터미널은 `#` 뒤를 설명으로 보지 않습니다). 그래서 첫 줄부터 칩니다.
+**Mac** — 터미널에서 한 줄씩:
 
 ```bash
-setopt interactivecomments; echo 'setopt interactivecomments' >> ~/.zshrc
-unzip -oq ~/Downloads/k8s-study.zip -d ~                          # -o 는 1회차 폴더를 묻지 않고 덮어쓰기
-echo 'export KUBECONFIG=~/k8s-study/kubeconfig' >> ~/.zshrc; export KUBECONFIG=~/k8s-study/kubeconfig
-brew install kubectl                                              # 이미 있으면 그대로
-kubectl get pods
+cd ~/k8s-study
+export KUBECONFIG=~/k8s-study/kubeconfig
+h=$(kubectl config view --minify -o jsonpath='{..namespace}' | sed 's/^k8s-study-//').52-78-167-165.sslip.io
+grep -rl --include='*.yaml' __HOST__ labs solutions | xargs sed -i '' "s/__HOST__/$h/g"
+grep host: labs/06-ingress/ingress.yaml
 ```
 
 나와야 할 화면 (예시)
 
 ```text
-PS> kubectl get pods
-curl                    1/1     Running   0          6d     ← 1회차에서 남긴 것 (처음이면 No resources found)
+PS> findstr "host:" labs\06-ingress\ingress.yaml
+    - host: user1.52-78-167-165.sslip.io       ← 내 아이디 . 52-78-167-165 . sslip.io
 ```
 
-**확인** — 파드 목록이나 No resources found 가 나오면 됩니다. 1회차에 했어도 첫 줄부터 그대로 쳐도 됩니다.
+**확인** — host: 뒤가 내 아이디.52-78-167-165.sslip.io 면 됩니다(아이디는 host · user1 · user2 · user3). 두 번 쳐도 괜찮습니다.
 
-**막히면** — Windows: 탐색기로 풀지 않고 첫 줄 명령으로 풉니다 · 새 탭에서 kubectl 을 못 찾으면 Windows Terminal 을 닫았다 다시 엽니다. Mac: 첫 줄 끝에는 # 설명을 붙이지 않습니다 · unzip 이 파일을 못 찾으면 다운로드 폴더의 파일 이름을 봅니다.
+**막히면** — Windows: `__HOST__` 그대로면 첫 줄 cd 를 빠뜨린 것 · k8s-study 폴더가 없으면(1회차에 안 왔으면) 1:1 로 받은 압축을 먼저 풉니다. Mac: `__HOST__` 그대로면 첫 줄 cd 를 빠뜨린 것 · k8s-study 폴더가 없으면(1회차에 안 왔으면) 1:1 로 받은 압축을 먼저 풉니다.
 
 실습 명령은 전부 **이 폴더(`k8s-study`) 맨 위**에서 칩니다. `labs` 안으로 더 들어가지 않습니다. 새 창 · 새 탭을 열면 `cd ~/k8s-study` 부터 칩니다.
 
@@ -98,7 +103,7 @@ pod/demo-765c687f8d-9tclb   1/1     Running   0          40s       (demo 파드 
 
 ## 실습 6. 인그레스 — `labs/06-ingress`
 
-1회차에는 클러스터 안의 curl 파드에서만 닿던 앱을, 내 PC 의 브라우저와 터미널에서 바로 엽니다. 압축에는 내 주소(host)가 이미 채워져 있습니다. ① 의 `kubectl get ingress` 화면에서 HOSTS 값을 보고, 그다음부터 명령의 `<HOSTS 값>` 자리에 그 값을 붙여 넣습니다(꺾쇠까지 바꿉니다).
+1회차에는 클러스터 안의 curl 파드에서만 닿던 앱을, 내 PC 의 브라우저와 터미널에서 바로 엽니다. 실습 0 ① 에서 내 주소(host)를 채워 두었습니다. ① 의 `kubectl get ingress` 화면에서 HOSTS 값을 보고, 그다음부터 명령의 `<HOSTS 값>` 자리에 그 값을 붙여 넣습니다(꺾쇠까지 바꿉니다).
 
 > demo · 서비스 · curl 파드가 없으면 먼저: `kubectl apply -f solutions/02-deployment -f solutions/03-service`
 
@@ -127,7 +132,7 @@ demo   traefik   user1.52-78-167-165.sslip.io     a0a8fc….elb.ap-northeast-2.a
 
 **확인** — HOSTS 가 내 주소, ADDRESS 가 입구(NLB)입니다. HOSTS 값은 사람마다 다르고, 다음 단계부터 이 값을 복사해 씁니다.
 
-**막히면** — HOSTS 가 __HOST__ 면 2회차 압축이 아닙니다 · TODO 그대로면 apply 가 Invalid value: "TODO" 로 거절.
+**막히면** — HOSTS 가 `__HOST__` 면 실습 0 ① 내 주소 채우기를 안 한 것 · TODO 그대로면 apply 가 Invalid value: "TODO" 로 거절.
 
 ### ② 밖에서 열기
 
