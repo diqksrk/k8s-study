@@ -122,7 +122,7 @@ PS> kubectl apply -f labs/06-ingress/ingress.yaml
 ingress.networking.k8s.io/demo created
 PS> kubectl get ingress demo
 NAME   CLASS     HOSTS                        ADDRESS                                     PORTS   AGE
-demo   traefik   user1.43-201-184-138.sslip.io   a93492….elb.ap-northeast-2.amazonaws.com    80      9s
+demo   traefik   user1.52-78-167-165.sslip.io     a0a8fc….elb.ap-northeast-2.amazonaws.com    80      9s
 ```
 
 **확인** — HOSTS 가 내 주소, ADDRESS 가 입구(NLB)입니다. HOSTS 값은 사람마다 다르고, 다음 단계부터 이 값을 복사해 씁니다.
@@ -143,9 +143,9 @@ for i in {1..4}; do curl -s http://<HOSTS 값>/pod; done         # Mac
 나와야 할 화면 (예시)
 
 ```text
-PS> curl.exe -s http://user1.43-201-184-138.sslip.io/
+PS> curl.exe -s http://user1.52-78-167-165.sslip.io/
 pod      : demo-765c687f8d-9tclb        version  : 1.0   …  (화면에서는 일곱 줄)
-PS> 1..4 | ForEach-Object { curl.exe -s http://user1.43-201-184-138.sslip.io/pod }
+PS> 1..4 | ForEach-Object { curl.exe -s http://user1.52-78-167-165.sslip.io/pod }
 demo-765c687f8d-9tclb
 demo-765c687f8d-gxf5v
 demo-765c687f8d-j92cp
@@ -172,10 +172,10 @@ curl.exe -s http://<HOSTS 값>/                     # 원래 주소는 그대로
 ```text
 PS> kubectl get ingress demo
 NAME   CLASS     HOSTS                                                   ADDRESS     PORTS   AGE
-demo   traefik   user1.43-201-184-138.sslip.io,v2.user1.43-201-184-138.sslip.io   a93492…     80      3m
-PS> curl.exe -s http://v2.user1.43-201-184-138.sslip.io/
+demo   traefik   user1.52-78-167-165.sslip.io,v2.user1.52-78-167-165.sslip.io     a0a8fc…     80      3m
+PS> curl.exe -s http://v2.user1.52-78-167-165.sslip.io/
 pod      : demo-v2-6c9f7d8b4-k2m4p        version  : 2.0  (화면에서는 두 줄)
-PS> curl.exe -s http://user1.43-201-184-138.sslip.io/
+PS> curl.exe -s http://user1.52-78-167-165.sslip.io/
 pod      : demo-765c687f8d-j92cp          version  : 1.0
 ```
 
@@ -197,12 +197,12 @@ curl.exe -s http://<HOSTS 값>/pod                  # 열어 둔 길은 그대�
 나와야 할 화면 (예시)
 
 ```text
-PS> curl.exe -sI http://user1.43-201-184-138.sslip.io/actuator/env
+PS> curl.exe -sI http://user1.52-78-167-165.sslip.io/actuator/env
 HTTP/1.1 200 OK
 PS> kubectl apply -f labs/06-ingress/ingress-safe.yaml
-PS> curl.exe -sI http://user1.43-201-184-138.sslip.io/actuator/env
+PS> curl.exe -sI http://user1.52-78-167-165.sslip.io/actuator/env
 HTTP/1.1 404 Not Found
-PS> curl.exe -s http://user1.43-201-184-138.sslip.io/pod
+PS> curl.exe -s http://user1.52-78-167-165.sslip.io/pod
 demo-765c687f8d-gxf5v
 ```
 
@@ -223,12 +223,12 @@ kubectl get ingress                               # 두 줄을 칸마다 비교�
 나와야 할 화면 (예시)
 
 ```text
-PS> curl.exe -sI http://broken.user1.43-201-184-138.sslip.io/
+PS> curl.exe -sI http://broken.user1.52-78-167-165.sslip.io/
 HTTP/1.1 404 Not Found
 PS> kubectl get ingress
 NAME          CLASS     HOSTS                               ADDRESS     PORTS   AGE
-demo          traefik   user1.43-201-184-138.sslip.io          a93492…     80      20m
-demo-broken   <none>    broken.user1.43-201-184-138.sslip.io               80      9s
+demo          traefik   user1.52-78-167-165.sslip.io            a0a8fc…     80      20m
+demo-broken   <none>    broken.user1.52-78-167-165.sslip.io                 80      9s
 ```
 
 **확인** — 원인을 찾아 ingress-broken.yaml 을 고치고 다시 apply 합니다. 같은 curl 이 200 OK 면 성공.
@@ -249,7 +249,7 @@ kubectl get ingress,deploy
 ```text
 PS> kubectl get ingress,deploy
 NAME                             CLASS     HOSTS                        ADDRESS     PORTS   AGE
-ingress.networking.k8s.io/demo   traefik   user1.43-201-184-138.sslip.io   a93492…     80      12m
+ingress.networking.k8s.io/demo   traefik   user1.52-78-167-165.sslip.io     a0a8fc…     80      12m
 NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
 deployment.apps/demo   3/3     3            3           20m
 ```
