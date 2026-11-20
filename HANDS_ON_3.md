@@ -79,7 +79,7 @@ cat accounts.txt                                    # Gitea · Argo CD 아이디
 PS> kubectl get deploy,svc,ingress,pods
 deployment.apps/demo   3/3     3            3           20s
 service/demo           ClusterIP   10.100.183.126   <none>   80/TCP   13d
-ingress.networking.k8s.io/demo   traefik   host.43-201-184-138.sslip.io   a93492…   80   6d
+ingress.networking.k8s.io/demo   traefik   host.52-78-167-165.sslip.io    a0a8fc…   80   6d
 pod/curl                    1/1     Running   0          13d
 PS> cat accounts.txt
   아이디     host                ← 사람마다 다름
@@ -476,7 +476,7 @@ LAST SEEN            TYPE      REASON             OBJECT                  MESSAG
 브라우저로 Grafana 를 열어 내 칸의 CPU · 메모리 그래프를 봅니다. 로그인은 없습니다.
 
 ```powershell
-http://grafana.43-201-184-138.sslip.io/             # 브라우저 주소창
+http://grafana.52-78-167-165.sslip.io/             # 브라우저 주소창
 # 왼쪽 메뉴 Dashboards → Kubernetes / Compute Resources / Namespace (Pods)
 # 위의 namespace 목록 → 내 칸 (k8s-study- 뒤에 accounts.txt 의 아이디)
 # 오른쪽 위 시간 → Last 3 hours (1시간 넘게 지난 실습 11 까지)
@@ -626,8 +626,8 @@ accounts.txt 의 계정으로 Gitea 와 Argo CD 에 로그인하고, kubectl 로
 
 ```powershell
 cat accounts.txt                                    # 주소 · 아이디 · 비밀번호 (두 곳이 같음)
-# 브라우저 ①  http://git.43-201-184-138.sslip.io/     → 오른쪽 위 로그인
-# 브라우저 ②  http://argocd.43-201-184-138.sslip.io/  → SIGN IN
+# 브라우저 ①  http://git.52-78-167-165.sslip.io/     → 오른쪽 위 로그인
+# 브라우저 ②  http://argocd.52-78-167-165.sslip.io/  → SIGN IN
 kubectl delete deploy,svc,ingress demo              # 오늘부터 demo 는 손으로 만들지 않음
 ```
 
