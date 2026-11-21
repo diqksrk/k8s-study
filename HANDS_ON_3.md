@@ -280,7 +280,7 @@ slow-broken   0/1     1            0           6m      ← 실습 13 에서 다�
 
 ### ① 노드와 라벨
 
-노드 4대의 AZ · 종류 · 역할 라벨을 보고, 지금 내 demo 파드가 어느 노드에 있는지 봅니다.
+노드 5대의 AZ · 종류 · 역할 라벨을 보고, 지금 내 demo 파드가 어느 노드에 있는지 봅니다.
 
 ```powershell
 kubectl get nodes -L topology.kubernetes.io/zone,node.kubernetes.io/instance-type,role
@@ -293,6 +293,7 @@ kubectl get pods -l app=demo -o wide                # NODE 열 = 노드 이름
 PS> kubectl get nodes -L topology.kubernetes.io/zone,node.kubernetes.io/instance-type,role
 NAME                       STATUS   …   ZONE              INSTANCE-TYPE   ROLE
 ip-192-168-64-145.…        Ready    …   ap-northeast-2a   t3.medium
+ip-192-168-4-151.…         Ready    …   ap-northeast-2a   t3.medium
 ip-192-168-58-30.…         Ready    …   ap-northeast-2c   t3.medium
 ip-192-168-11-197.…        Ready    …   ap-northeast-2d   t3.medium
 ip-192-168-70-12.…         Ready    …   ap-northeast-2a   t3.large        tools
@@ -348,8 +349,8 @@ PS> kubectl get pod picky
 picky   0/1     Pending   0          5s
 PS> kubectl describe pod picky
 Node-Selectors:  disktype=ssd
-  Warning  FailedScheduling  5s  default-scheduler  0/4 nodes are available:
-           1 node(s) had untolerated taint(s), 3 node(s) didn't match Pod's node affinity/selector.
+  Warning  FailedScheduling  5s  default-scheduler  0/5 nodes are available:
+           1 node(s) had untolerated taint(s), 4 node(s) didn't match Pod's node affinity/selector.
 ```
 
 **확인** — Node-Selectors 의 disktype=ssd 라벨을 가진 노드가 하나도 없어서 Pending 이라고 말할 수 있으면 성공.
@@ -374,7 +375,7 @@ kubectl get pod visitor -o wide                     # NODE = 도구 노드
 ```text
 PS> kubectl describe node -l role=tools     →   Taints:   dedicated=tools:NoSchedule
 PS> kubectl describe pod visitor
-  Warning  FailedScheduling  …  0/4 nodes are available: 1 node(s) had untolerated taint(s), 3 …
+  Warning  FailedScheduling  …  0/5 nodes are available: 1 node(s) had untolerated taint(s), 4 …
 PS> kubectl get pod visitor -o wide
 visitor   1/1     Running   0          8s    192.168.…    ip-192-168-70-12.…   ← 도구 노드
 ```
@@ -457,8 +458,8 @@ PS> kubectl events --types=Warning
 LAST SEEN            TYPE      REASON             OBJECT                  MESSAGE
 13m (x6 over 13m)    Warning   Unhealthy          Pod/slow-broken-…       Liveness probe failed: …
 3m50s (x40 over 12m) Warning   BackOff            Pod/slow-broken-…       Back-off restarting failed container …
-83s                  Warning   FailedScheduling   Pod/spread-…            0/4 nodes are available: …
-18s                  Warning   FailedScheduling   Pod/visitor             0/4 nodes are available: …
+83s                  Warning   FailedScheduling   Pod/spread-…            0/5 nodes are available: …
+18s                  Warning   FailedScheduling   Pod/visitor             0/5 nodes are available: …
 ```
 
 **확인** — slow-broken · 실습 12 의 고장이 시간 순서로 보이면 됩니다. 고장 9 줄이 없으면 정상 — 다시 안 일어난 채 1시간이 지나 지워진 것으로, ④ Loki 에서 다시 봅니다.
