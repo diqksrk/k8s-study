@@ -4,7 +4,7 @@
 
 | 실습 | 폴더 | 하는 일 |
 |---|---|---|
-| 0. 준비 | — | 새 압축 풀기, 2회차 끝 모습으로 맞추기, 지켜보기 켜기 |
+| 0. 준비 | — | 계정 파일 저장, 2회차 끝 모습으로 맞추기, 지켜보기 켜기 |
 | 11. 프로브 · 끊김 없는 교체 | `labs/11-probe` | readiness, 고장 9, FAIL 없이 2.0 으로, 고장 10, startupProbe |
 | 12. 스케줄링 | `labs/12-schedule` | 노드 라벨, AZ 마다 하나씩, 고장 11 · 12 (갈 곳 없는 파드 · 들어갈 수 없는 노드) |
 | 13. 로그 · 모니터링 | `labs/13-observe` | 지금 로그 · 죽기 전 로그, 이벤트, Grafana, Loki 로그 대시보드, 대시보드 없이 찾기(Drilldown), 숫자 쿼리와 알림(Grafana) |
@@ -13,51 +13,45 @@
 
 ## 실습 0. 준비
 
-받는 것은 1 · 2회차와 같습니다. **3회차 `k8s-study.zip`** 을 1:1 메시지로 받고(2회차 압축에 3회차 실습 파일과 내 계정 파일 `accounts.txt` 가 더해진 것 · 접속 파일은 같음), 이 실습 가이드를 받습니다. 앞 회차에 오지 않았어도 아래 명령 그대로 하면 됩니다.
+압축은 새로 받지 않습니다. 1회차에 푼 `k8s-study` 폴더와 접속 파일을 그대로 씁니다(3회차 실습 파일도 이미 들어 있고, 내 주소는 2회차 실습 0 ① 에서 채웠습니다). 새로 받는 것은 **내 계정 파일 `accounts.txt`** 하나(1:1 메시지 · Gitea · Argo CD 아이디와 비밀번호)와 이 실습 가이드입니다.
 
-`k8s-study.zip` 은 **다운로드 폴더**에 저장합니다. 명령은 누구나 같습니다. 이름이나 아이디를 바꿔 칠 곳은 없습니다.
+`accounts.txt` 는 **다운로드 폴더**에 저장합니다. 명령은 누구나 같습니다. 이름이나 아이디를 바꿔 칠 곳은 없습니다. 1 · 2회차에 오지 않아 `k8s-study` 폴더가 없으면, 1:1 로 받은 압축을 1회차 가이드 실습 0 대로 먼저 풉니다.
 
-### ① 새 압축 풀기
+### ① 계정 파일 저장
 
-내 PC 에 맞는 칸 하나만 합니다. 앞 회차에 했어도 첫 줄부터 그대로 다시 칩니다. 첫 줄이 2회차 폴더를 덮어씁니다(앞 회차에 고친 YAML 도 원래대로 돌아갑니다).
+내 PC 에 맞는 칸 하나만 합니다. 받은 `accounts.txt` 를 실습 폴더로 옮깁니다. 다시 쳐도 괜찮습니다.
 
 **Windows** — PowerShell 에서 한 줄씩:
 
 ```powershell
-Expand-Archive "$HOME\Downloads\k8s-study.zip" -DestinationPath $HOME -Force
-
-$p = [Environment]::GetEnvironmentVariable("Path", "User")
-[Environment]::SetEnvironmentVariable("Path", "$p;$HOME\k8s-study\bin", "User")
-[Environment]::SetEnvironmentVariable("KUBECONFIG", "$HOME\k8s-study\kubeconfig", "User")
-
-$env:Path += ";$HOME\k8s-study\bin"
+cd $HOME\k8s-study
+Move-Item "$HOME\Downloads\accounts.txt" . -Force
 $env:KUBECONFIG = "$HOME\k8s-study\kubeconfig"
-kubectl version --client
 kubectl get pods
+Test-Path accounts.txt
 ```
 
-**Mac** — 터미널에서 한 줄씩. 첫 줄은 이 가이드의 명령을 줄 끝 `# 설명` 까지 붙여 넣어도 에러가 나지 않게 하는 설정입니다(Mac 기본 터미널은 `#` 뒤를 설명으로 보지 않습니다). 그래서 첫 줄부터 칩니다.
+**Mac** — 터미널에서 한 줄씩:
 
 ```bash
-setopt interactivecomments; echo 'setopt interactivecomments' >> ~/.zshrc
-unzip -oq ~/Downloads/k8s-study.zip -d ~                          # -o 는 2회차 폴더를 묻지 않고 덮어쓰기
-echo 'export KUBECONFIG=~/k8s-study/kubeconfig' >> ~/.zshrc; export KUBECONFIG=~/k8s-study/kubeconfig
-brew install kubectl                                               # 이미 있으면 그대로
-kubectl version --client
+cd ~/k8s-study
+mv -f ~/Downloads/accounts.txt .
+export KUBECONFIG=~/k8s-study/kubeconfig
 kubectl get pods
+ls accounts.txt
 ```
 
 나와야 할 화면 (예시)
 
 ```text
-PS> kubectl version --client
-Client Version: v1.34.13
 PS> kubectl get pods  →  curl   1/1   Running   0   13d     ← 2회차에서 남긴 것 (처음이면 No resources found)
+PS> Test-Path accounts.txt
+True
 ```
 
-**확인** — 두 줄 다 나오면 됩니다. 1 · 2회차에 했어도 첫 줄부터 그대로 쳐도 됩니다.
+**확인** — 파드 목록(또는 No resources found)이 나오고 마지막 줄이 True 면 됩니다. 비밀번호는 이어서 엽니다.
 
-**막히면** — Windows: 탐색기로 풀지 않고 첫 줄 명령으로 풉니다 · 새 탭에서 kubectl 을 못 찾으면 Windows Terminal 을 닫았다 다시 엽니다. Mac: 첫 줄 끝에는 # 설명을 붙이지 않습니다 · unzip 이 파일을 못 찾으면 다운로드 폴더의 파일 이름을 봅니다.
+**막히면** — Windows: 파일을 못 찾으면 다운로드 폴더의 파일 이름을 봅니다(accounts (1).txt 등) · k8s-study 폴더가 없으면 받은 압축부터 풉니다. Mac: 파일을 못 찾으면 다운로드 폴더의 파일 이름을 봅니다(accounts (1).txt 등) · k8s-study 폴더가 없으면 받은 압축부터 풉니다.
 
 실습 명령은 전부 **이 폴더(`k8s-study`) 맨 위**에서 칩니다. `labs` 안으로 더 들어가지 않습니다. 새 창 · 새 탭을 열면 `cd ~/k8s-study` 부터 칩니다.
 
